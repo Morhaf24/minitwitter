@@ -14,6 +14,8 @@
     "prettify": "prettier --write server/**/*.ts"
   },
   "dependencies": {
+    "cookie-parser": "^1.4.6",
+    "dotenv": "^16.0.3",
     "express": "^4.18.2",
     "jsonwebtoken": "^9.0.0",
     "mariadb": "^3.1.1",

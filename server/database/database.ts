@@ -23,10 +23,10 @@ export class Database {
     await this.executeSQL(TWEET_TABLE)
   }
 
-  public executeSQL = async (query: string) => {
+  public executeSQL = async (query: string, values?: any[]) => {
     try {
       const conn = await this._pool.getConnection()
-      const res = await conn.query(query)
+      const res = await conn.query(query, values)
       conn.end()
       return res
     } catch (err) {
