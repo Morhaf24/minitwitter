@@ -1,5 +1,6 @@
 body {
   font-family: 'Roboto', sans-serif;
+  background-color: rgb(100, 160, 180);
 }
 .login {  
   width: 500px;  
