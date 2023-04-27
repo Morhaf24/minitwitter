@@ -24,6 +24,10 @@ export class API {
     this.app.post('/tweet', this.postTweet.bind(this));
     this.app.put('/tweet/:id', this.updateTweet.bind(this));
     this.app.delete('/tweet/:id', this.deleteTweet.bind(this));
+    this.app.get('/comments', this.getComments.bind(this));
+    this.app.post('/comment', this.postComment.bind(this));
+    this.app.put('/comment/:id', this.updateComment.bind(this));
+    this.app.delete('/comment/:id', this.deleteComment.bind(this));
    //this.app.get('/whoAmI', this.whoAmI.bind(this));
   }
   // Methods
@@ -123,11 +127,59 @@ export class API {
   private async deleteTweet(req: Request, res: Response) {
     const id = req.params.id;
 
-    const result = await db.executeSQL('DELETE FROM tweets WHERE id = ?', [id]);
+    const result = await db.executeSQL('DELETE FROM comment WHERE id = ?', [id]);
     if (result.affectedRows === 0) {
-      res.status(400).send("There are no tweets to delete");
+      res.status(400).send("There are no comment to delete");
     } else {
-      res.status(200).send(`The Tweet has been deleted`);
+      res.status(200).send(`The comment has been deleted`);
+    }
+  }
+  
+  private async getComments(req: Request, res: Response) {
+    const result = await db.executeSQL('SELECT comment FROM comment');
+    if (result.length === 0) {
+      res.status(200).send("No Comments");
+    } else {
+      res.status(200).send(result);
+    }
+  }
+
+  private async postComment(req: Request, res: Response) {
+    const { user_id, comment, content } = req.body;
+
+    try {
+      await db.executeSQL(
+        `INSERT INTO comment (user_id, comment, content) VALUES (?, ?, ?)`,
+        [user_id, comment, content]
+      );
+      res.send(`Thanks for your comment.`);
+    } catch (error) {
+      console.log(error);
+      res.status(500).send('Failed to comment.');
+    }
+  }
+
+  private async updateComment(req: Request, res: Response) {
+    const id = req.params.id;
+    const { comment } = req.body;
+  
+    const result = await db.executeSQL('UPDATE comment SET `comment`= ? WHERE id = ?', [comment, id]);
+  
+    if (result.affectedRows === 0) {
+      res.status(400).send("There are no comment to update");
+    } else {
+      res.status(200).send(`The comment with id ${id} has been updated`);
+    }
+  }
+
+  private async deleteComment(req: Request, res: Response) {
+    const id = req.params.id;
+
+    const result = await db.executeSQL('DELETE FROM comment WHERE id = ?', [id]);
+    if (result.affectedRows === 0) {
+      res.status(400).send("There are no comment to delete");
+    } else {
+      res.status(200).send(`The comment has been deleted`);
     }
   }
 }
