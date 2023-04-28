@@ -24,7 +24,7 @@ label {
   font-size: 17px;
 }
 
-#username {
+.username {
   width: 300px;
   height: 30px;
   border: none;
@@ -32,7 +32,7 @@ label {
   padding-left: 8px;
 }
 
-#password {
+.password {
   width: 300px;
   height: 30px;
   border: none;
@@ -68,7 +68,7 @@ b {
   color: black;
 }
 
-a.registry {
+a.register {
   color: black;
   margin-left: 220px;
 }
