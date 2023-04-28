@@ -4,6 +4,7 @@ import http from 'http'
 import { resolve, dirname } from 'path'
 import { Database } from './database'
 
+
 class Backend {
   // Properties
   private _app: Express

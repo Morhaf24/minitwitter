@@ -1,6 +1,6 @@
 {
   "extends": "airbnb-base",
-  "rules": {
+ /* "rules": {
     "no-console": "warn"
-  }
+  }*/
 }
