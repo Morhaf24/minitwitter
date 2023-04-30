@@ -276,12 +276,12 @@ export class API {
     const { tweet_id } = req.body;
     const like = 1;
   
-    const likeCount = await db.executeSQL('SELECT `like`, dislike FROM likes WHERE id = ?', [id]);
+    const likeCount = await db.executeSQL('SELECT likes, dislike FROM likes WHERE id = ?', [id]);
     const dislike = likeCount[0].dislike;
     
-    const insertLike = likeCount[0].like + like;
+    const insertLike = likeCount[0].likes + like;
 
-    await db.executeSQL('UPDATE likes SET tweet_id = ?, `like` = ?, dislike = ? WHERE id = ?', [tweet_id, insertLike, dislike, id]);
+    await db.executeSQL('UPDATE likes SET tweet_id = ?, likes = ?, dislike = ? WHERE id = ?', [tweet_id, insertLike, dislike, id]);
     res.send('Tweet liked successfully');
   }
 
@@ -290,12 +290,12 @@ export class API {
     const { tweet_id } = req.body;
     const dislike = 1;
   
-    const dislikeCount = await db.executeSQL('SELECT `like`, dislike FROM likes WHERE id = ?', [id]);
-    const like = dislikeCount[0].like;
+    const dislikeCount = await db.executeSQL('SELECT likes, dislike FROM likes WHERE id = ?', [id]);
+    const like = dislikeCount[0].likes;
     
     const insertDislike = dislikeCount[0].dislike + dislike;
 
-    await db.executeSQL('UPDATE likes SET tweet_id = ?, `like` = ?, dislike = ? WHERE id = ?', [tweet_id, like, insertDislike, id]);
+    await db.executeSQL('UPDATE likes SET tweet_id = ?, likes = ?, dislike = ? WHERE id = ?', [tweet_id, like, insertDislike, id]);
     res.send('Tweet disliked successfully');
   }
 
@@ -304,12 +304,12 @@ export class API {
     const { tweet_id } = req.body;
     const like = 1;
   
-    const likeCount = await db.executeSQL('SELECT `like`, dislike FROM likes WHERE id = ?', [id]);
+    const likeCount = await db.executeSQL('SELECT likes, dislike FROM likes WHERE id = ?', [id]);
     const dislike = likeCount[0].dislike;
     
-    const insertLike = likeCount[0].like - like;
+    const insertLike = likeCount[0].likes - like;
 
-    await db.executeSQL('UPDATE likes SET tweet_id = ?, `like` = ?, dislike = ? WHERE id = ?', [tweet_id, insertLike, dislike, id]);
+    await db.executeSQL('UPDATE likes SET tweet_id = ?, likes = ?, dislike = ? WHERE id = ?', [tweet_id, insertLike, dislike, id]);
     res.send('remove like successfully');
   }
 
@@ -318,12 +318,12 @@ export class API {
     const { tweet_id } = req.body;
     const dislike = 1;
   
-    const dislikeCount = await db.executeSQL('SELECT `like`, dislike FROM likes WHERE id = ?', [id]);
-    const like = dislikeCount[0].like;
+    const dislikeCount = await db.executeSQL('SELECT likes, dislike FROM likes WHERE id = ?', [id]);
+    const like = dislikeCount[0].likes;
     
     const insertDislike = dislikeCount[0].dislike - dislike;    
 
-    await db.executeSQL('UPDATE likes SET tweet_id = ?, `like` = ?, dislike = ? WHERE id = ?', [tweet_id, like, insertDislike, id]);
+    await db.executeSQL('UPDATE likes SET tweet_id = ?, likes = ?, dislike = ? WHERE id = ?', [tweet_id, like, insertDislike, id]);
     res.send('remove disliked successfully');
   }  
 }
