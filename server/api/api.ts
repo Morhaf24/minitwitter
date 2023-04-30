@@ -34,6 +34,10 @@ export class API {
     this.app.get('/user/:id', this.getUser.bind(this));
     this.app.put('/user/:id', this.updateUser.bind(this));
     this.app.delete('/user/:id', this.deleteUser.bind(this));
+    this.app.put('/like/:id', this.likeTweet.bind(this));
+    this.app.put('/dislike/:id', this.dislikeTweet.bind(this));
+    this.app.put('/deleteLike/:id', this.deleteLike.bind(this));
+    this.app.put('/deleteDisike/:id', this.deleteDisike.bind(this));
    //this.app.get('/whoAmI', this.whoAmI.bind(this));
   }
   // Methods
@@ -266,4 +270,60 @@ export class API {
       res.status(200).send(`The user has been deleted`);
     }
   }
+
+  private async likeTweet(req: Request, res: Response) {
+    const id = req.params.id;
+    const { tweet_id } = req.body;
+    const like = 1;
+  
+    const likeCount = await db.executeSQL('SELECT `like`, dislike FROM likes WHERE id = ?', [id]);
+    const dislike = likeCount[0].dislike;
+    
+    const insertLike = likeCount[0].like + like;
+
+    await db.executeSQL('UPDATE likes SET tweet_id = ?, `like` = ?, dislike = ? WHERE id = ?', [tweet_id, insertLike, dislike, id]);
+    res.send('Tweet liked successfully');
+  }
+
+  private async dislikeTweet(req: Request, res: Response) {
+    const id = req.params.id;
+    const { tweet_id } = req.body;
+    const dislike = 1;
+  
+    const dislikeCount = await db.executeSQL('SELECT `like`, dislike FROM likes WHERE id = ?', [id]);
+    const like = dislikeCount[0].like;
+    
+    const insertDislike = dislikeCount[0].dislike + dislike;
+
+    await db.executeSQL('UPDATE likes SET tweet_id = ?, `like` = ?, dislike = ? WHERE id = ?', [tweet_id, like, insertDislike, id]);
+    res.send('Tweet disliked successfully');
+  }
+
+  private async deleteLike(req: Request, res: Response) {
+    const id = req.params.id;
+    const { tweet_id } = req.body;
+    const like = 1;
+  
+    const likeCount = await db.executeSQL('SELECT `like`, dislike FROM likes WHERE id = ?', [id]);
+    const dislike = likeCount[0].dislike;
+    
+    const insertLike = likeCount[0].like - like;
+
+    await db.executeSQL('UPDATE likes SET tweet_id = ?, `like` = ?, dislike = ? WHERE id = ?', [tweet_id, insertLike, dislike, id]);
+    res.send('remove like successfully');
+  }
+
+  private async deleteDisike(req: Request, res: Response) {
+    const id = req.params.id;
+    const { tweet_id } = req.body;
+    const dislike = 1;
+  
+    const dislikeCount = await db.executeSQL('SELECT `like`, dislike FROM likes WHERE id = ?', [id]);
+    const like = dislikeCount[0].like;
+    
+    const insertDislike = dislikeCount[0].dislike - dislike;    
+
+    await db.executeSQL('UPDATE likes SET tweet_id = ?, `like` = ?, dislike = ? WHERE id = ?', [tweet_id, like, insertDislike, id]);
+    res.send('remove disliked successfully');
+  }  
 }
