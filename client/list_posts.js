@@ -13,6 +13,7 @@ function onListResponse() {
     }
 
     tweetsResponse = JSON.parse(listRequest.responseText);
+    console.log(tweetsResponse);
 
     for (var i = 0; i < tweetsResponse.length; i++) {
         let tweetsDiv = document.createElement("div");

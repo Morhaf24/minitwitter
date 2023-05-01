@@ -20,7 +20,6 @@ export class API {
     this.app.use(cookieParser());
     this.app.use(bodyParser.json());
     this.app.use(bodyParser.urlencoded({ extended: true }));
-    this.app.get('/hello', this.sayHello.bind(this));
     this.app.post('/register', this.register.bind(this));
     this.app.post('/login', this.login.bind(this));
     this.app.get('/tweets', this.getTweets.bind(this));
@@ -34,19 +33,14 @@ export class API {
     this.app.get('/user/:id', this.getUser.bind(this));
     this.app.put('/user/:id', this.updateUser.bind(this));
     this.app.delete('/user/:id', this.deleteUser.bind(this));
-    this.app.put('/like/:id', this.likeTweet.bind(this));
+    this.app.post('/like', this.likeTweet.bind(this));
     this.app.put('/dislike/:id', this.dislikeTweet.bind(this));
     this.app.put('/deleteLike/:id', this.deleteLike.bind(this));
     this.app.put('/deleteDisike/:id', this.deleteDisike.bind(this));
-   //this.app.get('/whoAmI', this.whoAmI.bind(this));
+    this.app.get('/whoAmI', this.whoAmI.bind(this));
+    this.app.get('/role', this.getRole.bind(this));
   }
   // Methods
-  private async sayHello(req: Request, res: Response) {
-    const result = await db.executeSQL('SELECT * FROM users');
-
-    res.send(result);
-  }
-
   private async register(req: Request, res: Response) {
     const { username, password, role } = req.body;
     const hashedPassword = crypto.createHash('sha256').update(password).digest('hex');
@@ -102,16 +96,79 @@ export class API {
     return jwt.sign(username, TOKEN_SECRET, { expiresIn: '1800s' });
   }
 
-  private async getTweets(req: Request, res: Response) {
-    const result = await db.executeSQL('SELECT content FROM tweets');
-    if (result.length === 0) {
-      res.status(200).send("There are no tweets yet");
-    } else {
-      res.status(200).send(result);
+  public authentication(req: Request, res: Response) {
+    const token = req.cookies.jwt;
+    if (!token) {
+      res.status(401).send('Unauthorized');
+      return;
+    }
+    return true;
+  }
+
+  public whoAmI(req: Request, res: Response) {
+    const token = req.cookies.jwt;
+    if (!this.authentication(req, res)) {
+      return;
+    }
+
+    try {
+      const decodedToken = jwt.verify(token, TOKEN_SECRET) as { username: string };
+      const username = decodedToken.username;
+
+      res.status(200).send(username);
+    } catch (error) {
+      res.status(401).send('Unauthorized');
     }
   }
 
+  public async getRole(req: Request, res: Response) {
+    const token = req.cookies.jwt;
+    if (!this.authentication(req, res)) {
+      return;
+    }
+    try {
+      const decodedToken = jwt.verify(token, TOKEN_SECRET) as { username: string };
+      const username = decodedToken.username;
+
+      const result = await db.executeSQL('SELECT role FROM users WHERE name = ?', [username]);
+      if (result[0].role === "A") {
+        res.status(200).send(result[0].role);
+        return true;
+      }
+      else if (result[0].role === "M") {
+        res.status(200).send(result[0].role);
+        return true;
+      }
+      res.status(200).send(result[0].role);
+      return false;
+    } catch (error) {
+      res.status(401).send('Unauthorized');
+    }
+  }
+
+  private async getTweets(req: Request, res: Response) {
+    if (!this.authentication(req, res)) {
+      return;
+    }
+    const result = await db.executeSQL(`
+      SELECT tweets.content, tweets.likes, tweets.dislike, users.name, GROUP_CONCAT(comment.comment) AS comments
+      FROM tweets
+      LEFT JOIN users ON tweets.user_id = users.id
+      LEFT JOIN comment ON tweets.id = comment.content
+      GROUP BY tweets.id;
+    `);
+  
+    if (result.length === 0) {
+      res.status(400).send("There are no tweets yet");
+    } else {
+      res.status(200).send(result);
+    }
+  }  
+  
   private async postTweet(req: Request, res: Response) {
+    if (!this.authentication(req, res)) {
+      return;
+    }
     const { user_id, content } = req.body;
 
     try {
@@ -127,6 +184,9 @@ export class API {
   }
 
   private async updateTweet(req: Request, res: Response) {
+    if (!this.authentication(req, res)) {
+      return;
+    }
     const id = req.params.id;
     const { user_id, content } = req.body;
   
@@ -140,6 +200,9 @@ export class API {
   } 
 
   private async deleteTweet(req: Request, res: Response) {
+    if (!this.authentication(req, res)) {
+      return;
+    }
     const id = req.params.id;
 
     const result = await db.executeSQL('DELETE FROM comment WHERE id = ?', [id]);
@@ -151,6 +214,9 @@ export class API {
   }
   
   private async getComments(req: Request, res: Response) {
+    if (!this.authentication(req, res)) {
+      return;
+    }
     const result = await db.executeSQL('SELECT comment FROM comment');
     if (result.length === 0) {
       res.status(200).send("No Comments");
@@ -160,6 +226,9 @@ export class API {
   }
 
   private async postComment(req: Request, res: Response) {
+    if (!this.authentication(req, res)) {
+      return;
+    }
     const { user_id, comment, content } = req.body;
 
     try {
@@ -175,6 +244,9 @@ export class API {
   }
 
   private async updateComment(req: Request, res: Response) {
+    if (!this.authentication(req, res)) {
+      return;
+    }
     const id = req.params.id;
     const { comment } = req.body;
   
@@ -188,6 +260,9 @@ export class API {
   }
 
   private async deleteComment(req: Request, res: Response) {
+    if (!this.authentication(req, res)) {
+      return;
+    }
     const id = req.params.id;
 
     const result = await db.executeSQL('DELETE FROM comment WHERE id = ?', [id]);
@@ -199,6 +274,9 @@ export class API {
   }
 
   private async getUser(req: Request, res: Response) {
+    if (!this.authentication(req, res)) {
+      return;
+    }
     const id = req.params.id;
     const result = await db.executeSQL('SELECT name FROM users WHERE id = ?', [id]);
     if (result.length === 0) {
@@ -209,6 +287,9 @@ export class API {
   }
 
   private async updateUser(req: Request, res: Response) {
+    if (!this.authentication(req, res)) {
+      return;
+    }
     const id = req.params.id;
     const { oldPassword, name, password } = req.body;
   
@@ -261,6 +342,9 @@ export class API {
   }
 
   private async deleteUser(req: Request, res: Response) {
+    if (!this.authentication(req, res)) {
+      return;
+    }
     const id = req.params.id;
 
     const result = await db.executeSQL('DELETE FROM users WHERE id = ?', [id]);
@@ -272,10 +356,14 @@ export class API {
   }
 
   private async likeTweet(req: Request, res: Response) {
-    const id = req.params.id;
+    if (!this.authentication(req, res)) {
+      return;
+    }
+    let id = req.params.id;
     const { tweet_id } = req.body;
     const like = 1;
-  
+    const dislikeNow = 0;
+
     const likeCount = await db.executeSQL('SELECT likes, dislike FROM likes WHERE id = ?', [id]);
     const dislike = likeCount[0].dislike;
     
@@ -286,6 +374,9 @@ export class API {
   }
 
   private async dislikeTweet(req: Request, res: Response) {
+    if (!this.authentication(req, res)) {
+      return;
+    }
     const id = req.params.id;
     const { tweet_id } = req.body;
     const dislike = 1;
@@ -300,6 +391,9 @@ export class API {
   }
 
   private async deleteLike(req: Request, res: Response) {
+    if (!this.authentication(req, res)) {
+      return;
+    }
     const id = req.params.id;
     const { tweet_id } = req.body;
     const like = 1;
@@ -314,6 +408,9 @@ export class API {
   }
 
   private async deleteDisike(req: Request, res: Response) {
+    if (!this.authentication(req, res)) {
+      return;
+    }
     const id = req.params.id;
     const { tweet_id } = req.body;
     const dislike = 1;
