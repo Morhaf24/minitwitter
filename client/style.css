@@ -142,3 +142,19 @@ nav a:hover {
   background-color: black;
   color: white;
 }
+
+div.profileDiv {
+  color: black;
+}
+
+div.tweetDiv {
+  color: black;
+}
+
+div.commentDiv {
+  font-size: larger;
+}
+
+div.tweetsDiv {
+  background-color: white;
+}

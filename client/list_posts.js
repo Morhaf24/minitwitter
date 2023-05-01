@@ -14,46 +14,44 @@ function onListResponse() {
 
     tweetsResponse = JSON.parse(listRequest.responseText);
 
-    for (const i = 0; i < tweetsResponse.length; i++) {
-
+    for (var i = 0; i < tweetsResponse.length; i++) {
         let tweetsDiv = document.createElement("div");
+        tweetsDiv.className = "tweetsDiv";
         mainWindow.appendChild(tweetsDiv);
 
         let profileDiv = document.createElement("div");
+        profileDiv.innerHTML = tweetsResponse[i].name;
+        profileDiv.className = "profileDiv";
         tweetsDiv.appendChild(profileDiv);
 
         let tweetDiv = document.createElement("div");
+        tweetDiv.innerHTML = tweetsResponse[i].content;
+        tweetDiv.className = "tweetDiv";
         tweetsDiv.appendChild(tweetDiv);
 
         let feedBackDiv = document.createElement("div");
+        feedBackDiv.innerHTML = tweetsResponse[i].likes
+        feedBackDiv.className = "tweetDiv";
         tweetsDiv.appendChild(feedBackDiv);
-        
-        let commentDiv= document.createElement("div");
+
+        let commentDiv = document.createElement("div");
+        tweetDiv.innerHTML = tweetsResponse[i].comments;
+        feedBackDiv.className = "commentDiv";
         tweetsDiv.appendChild(commentDiv);
 
         var deleteEditDiv = document.createElement("div");
         tweetsDiv.appendChild(deleteEditDiv);
-        
+
         var deleteButton = document.createElement("button");
         deleteButton.innerText = "Delete";
         deleteButton.setAttribute("delete-post");
         deleteButton.addEventListener("click", onDeleteButtonPressed);
         deleteEditCell.appendChild(deleteButton);
-    
+
         var editButton = document.createElement("button");
-    
         editButton.innerText = "Edit";
         editButton.setAttribute("edit-post");
         editButton.addEventListener("click", onEditButtonPressed);
-    
         deleteAndEditCell.appendChild(editButton);
     }
 }
-
-function onDeleteButtonPressed(event) {
-    deleteRequest = new XMLHttpRequest();
-    deleteRequest.open("Delete", ".http://localhost:4200/tweet" + event.currentTarget.getAttribute("delete-post"));
-    deleteRequest.onreadystatechange = onProductDeleteResponsed;
-    deleteRequest.send();
-  }
-  
