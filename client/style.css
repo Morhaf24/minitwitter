@@ -144,17 +144,45 @@ nav a:hover {
 }
 
 div.profileDiv {
-  color: black;
+  color: white;
+  background-color: rgb(50, 100, 200);
+  font-size: x-large;
+  font-weight: 900;
 }
 
 div.tweetDiv {
   color: black;
+  font-size: larger;
+  height: 100px;
+  background-color: rgb(50, 175, 240);
+}
+
+div.likesDiv {
+  color: white;
+  display: inline-block;
+  font-size: large;
+}
+
+div.dislikesDiv {
+  color: red;
+  font-size: large;
+  display: inline-block;
+  margin-left: 50px;
+
 }
 
 div.commentDiv {
+  color: black;
   font-size: larger;
+  background-color: rgb(113, 166, 213);
 }
 
 div.tweetsDiv {
-  background-color: white;
+  margin-top: 50px;
+  width: 90%;
+  height: 0;
+  border: none;
+  display: inline-block;
+  margin-left: 5%;
+  background-color: rgb(50, 175, 240);
 }

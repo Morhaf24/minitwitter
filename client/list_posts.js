@@ -30,29 +30,19 @@ function onListResponse() {
         tweetDiv.className = "tweetDiv";
         tweetsDiv.appendChild(tweetDiv);
 
-        let feedBackDiv = document.createElement("div");
-        feedBackDiv.innerHTML = tweetsResponse[i].likes
-        feedBackDiv.className = "tweetDiv";
-        tweetsDiv.appendChild(feedBackDiv);
+        let likeDiv = document.createElement("div");
+        likeDiv.innerHTML = tweetsResponse[i].likes
+        likeDiv.className = "likesDiv";
+        tweetsDiv.appendChild(likeDiv);
+
+        let dislikeDiv = document.createElement("div");
+        dislikeDiv.innerHTML = tweetsResponse[i].dislike;
+        dislikeDiv.className = "dislikesDiv";
+        tweetsDiv.appendChild(dislikeDiv);
 
         let commentDiv = document.createElement("div");
-        tweetDiv.innerHTML = tweetsResponse[i].comments;
-        feedBackDiv.className = "commentDiv";
+        commentDiv.innerHTML = tweetsResponse[i].comments;
+        commentDiv.className = "commentDiv";
         tweetsDiv.appendChild(commentDiv);
-
-        var deleteEditDiv = document.createElement("div");
-        tweetsDiv.appendChild(deleteEditDiv);
-
-        var deleteButton = document.createElement("button");
-        deleteButton.innerText = "Delete";
-        deleteButton.setAttribute("delete-post");
-        deleteButton.addEventListener("click", onDeleteButtonPressed);
-        deleteEditCell.appendChild(deleteButton);
-
-        var editButton = document.createElement("button");
-        editButton.innerText = "Edit";
-        editButton.setAttribute("edit-post");
-        editButton.addEventListener("click", onEditButtonPressed);
-        deleteAndEditCell.appendChild(editButton);
     }
 }
