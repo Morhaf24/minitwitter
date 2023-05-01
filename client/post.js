@@ -8,8 +8,8 @@ if (location.host.includes('localhost')) {
     )
   }
   
-  const postForm = document.getElementById("create_post");
-  const postInput = document.getElementById("post_input");
+  let postForm = document.getElementById("create_post");
+  const post_Input = document.getElementById("post_input");
   let postRequest;
   
   postForm.addEventListener("submit", onPostFormSubmitted);
@@ -18,7 +18,7 @@ if (location.host.includes('localhost')) {
     event.preventDefault();
   
     const postData = {
-      postInput: postInput.value
+        content: post_Input.value
     };
   
     postRequest = new XMLHttpRequest();

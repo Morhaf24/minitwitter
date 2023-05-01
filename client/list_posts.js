@@ -31,17 +31,17 @@ function onListResponse() {
         tweetsDiv.appendChild(tweetDiv);
 
         let likeDiv = document.createElement("div");
-        likeDiv.innerHTML = tweetsResponse[i].likes
+        likeDiv.innerHTML = tweetsResponse[i].likes || "0";
         likeDiv.className = "likesDiv";
         tweetsDiv.appendChild(likeDiv);
 
         let dislikeDiv = document.createElement("div");
-        dislikeDiv.innerHTML = tweetsResponse[i].dislike;
+        dislikeDiv.innerHTML = tweetsResponse[i].dislike || "0";;
         dislikeDiv.className = "dislikesDiv";
         tweetsDiv.appendChild(dislikeDiv);
 
         let commentDiv = document.createElement("div");
-        commentDiv.innerHTML = tweetsResponse[i].comments;
+        commentDiv.innerHTML = tweetsResponse[i].comments || "no comments";
         commentDiv.className = "commentDiv";
         tweetsDiv.appendChild(commentDiv);
     }
