@@ -162,7 +162,7 @@ export class API {
     `);
 
     if (result.length === 0) {
-      res.status(400).send("There are no tweets yet");
+      res.status(204).send("There are no tweets yet");
     } else {
       res.status(200).send(result);
     }

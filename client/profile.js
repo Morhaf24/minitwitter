@@ -79,7 +79,6 @@ function onListResponse() {
     }
 }
 
-
 const usernameForm = document.getElementById("edit_username");
 const usernameInput = document.getElementById("username_input");
 let usernameRequest;
@@ -115,7 +114,6 @@ function onUsernameResponse() {
       }
 }
 
-
 passwordForm.addEventListener("submit", onPasswordFormPressed);
 
 function onPasswordFormPressed(event) {
@@ -123,7 +121,6 @@ function onPasswordFormPressed(event) {
 
 
 }
-
 
 function onDeleteButtonPressed(event) {
     deleteRequest = new XMLHttpRequest();

@@ -74,21 +74,24 @@ function onListResponse() {
         
             let deleteButton = document.createElement("button");
             deleteButton.innerText = "Delete";
-            deleteButton.className = "edit-and-delete-button";
+            deleteButton.className = "deleteButton";
             deleteButton.setAttribute("delete-tweet-id", tweetsResponse[i].id);
             deleteButton.addEventListener("click", onDeleteButtonPressed);
-            tweetsDiv.appendChild(deleteButton);
+            tweetDiv.appendChild(deleteButton);
           
             let editButton = document.createElement("button");
             editButton.innerText = "Edit";
-            editButton.className = "edit-and-delete-button"
+            editButton.className = "editButton"
             editButton.setAttribute("edit-tweet-id", tweetsResponse[i].id);
             editButton.addEventListener("click", onEditButtonPressed);
-            tweetsDiv.appendChild(editButton);
+            tweetDiv.appendChild(editButton);
         }
     }
     else if (tweetsResponseStatus === 401) {
         alert("Unauthorized")
+    }
+    else if (tweetsResponseStatus === 204) {
+        alert("No tweets found")
     }
     else {
         alert("Try again")

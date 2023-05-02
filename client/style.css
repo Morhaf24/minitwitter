@@ -140,6 +140,7 @@ nav a:hover {
 .new_post:hover {
   background-color: black;
   color: white;
+  font-size: larger;
 }
 
 div.profileDiv {
@@ -222,7 +223,7 @@ button.disLikeButton:hover {
 }
 
 input.commentInput {
-  width: 84%;
+  width: 83%;
   height: 30px;
   margin-top: 10px;
   border: none;
@@ -232,6 +233,7 @@ input.commentInput {
 }
 
 button.commentButton {
+  width: 100px;
   height: 30px;
   border: none;
   border-radius: 17px;
@@ -245,4 +247,50 @@ button.commentButton:hover {
   background-color: black;
   color: white;
   font-size: larger;
+}
+
+button.deleteButton {
+  height: 30px;
+  width: 100px;
+  border: none;
+  border-radius: 17px;
+  background-color: red;
+  color: white;
+  margin: auto;
+  margin-left: 101%;
+  font-size: large;
+}
+
+button.deleteButton:hover {
+  background-color: rgb(120, 0, 0);
+  color: white;
+  font-size: larger;
+}
+
+button.editButton {
+  height: 30px;
+  width: 100px;
+  border: none;
+  border-radius: 17px;
+  color: black;
+  margin: auto;
+  margin-left: 101%;
+  font-size: large;
+  margin-top: 5px;
+}
+
+button.editButton:hover {
+  background-color: black;
+  color: white;
+  font-size: larger;
+}
+
+.edit_username {
+  display: inline-block;
+  margin-left: 12%;
+}
+
+.edit_password {
+  display: inline-block;
+  margin-left: 11%;
 }
