@@ -5,7 +5,6 @@ const passwordForm = document.getElementById("edit_password");
 const passwordInput = document.getElementById("password_input");
 let passwordRequest;
 
-
 let myTweetsRequest = new XMLHttpRequest();
 myTweetsRequest.open("GET", "http://localhost:4200/myTweets");
 myTweetsRequest.onreadystatechange = onListResponse;
@@ -49,6 +48,27 @@ function onListResponse() {
             commentDiv.innerHTML = tweetsResponse[i].comments || "no comments";
             commentDiv.className = "commentDiv";
             tweetsDiv.appendChild(commentDiv);
+
+            const profileName = document.getElementById("profile_name");
+            profileName.innerHTML = "Welcome " + tweetsResponse[i].name + " ^_^";
+
+            let deleteAndEditCell = document.createElement("div");
+            tweetsDiv.appendChild(deleteAndEditCell);
+            deleteAndEditCell.className = "delete-and-edit-td";
+        
+            let deleteButton = document.createElement("button");
+            deleteButton.innerText = "Delete";
+            deleteButton.className = "edit-and-delete-button";
+            deleteButton.setAttribute("delete-tweet-id", tweetsResponse[i].id);
+            deleteButton.addEventListener("click", onDeleteButtonPressed);
+            tweetsDiv.appendChild(deleteButton);
+          
+            let editButton = document.createElement("button");
+            editButton.innerText = "Edit";
+            editButton.className = "edit-and-delete-button"
+            editButton.setAttribute("edit-tweet-id", tweetsResponse[i].id);
+            editButton.addEventListener("click", onEditButtonPressed);
+            tweetsDiv.appendChild(editButton);
         }
     }
     else if (tweetsResponseStatus === 401) {
@@ -58,6 +78,7 @@ function onListResponse() {
         alert("No tweets found")
     }
 }
+
 
 const usernameForm = document.getElementById("edit_username");
 const usernameInput = document.getElementById("username_input");
@@ -103,4 +124,30 @@ function onPasswordFormPressed(event) {
 
 }
 
-  
+
+function onDeleteButtonPressed(event) {
+    deleteRequest = new XMLHttpRequest();
+    deleteRequest.open("Delete", "http://localhost:4200/tweet/" + event.currentTarget.getAttribute("delete-tweet-id"));
+    deleteRequest.onreadystatechange = onCategoryDeleteResponsed;
+    deleteRequest.send();
+}
+
+function onCategoryDeleteResponsed() {
+if (deleteRequest.readyState < 4) {
+    return;
+}
+
+responseStatus = deleteRequest.status;
+
+if (responseStatus === 200) {
+    alert("Deleted");
+    window.location.reload();
+}
+else {
+    alert("Not found");
+}
+}
+
+function onEditButtonPressed(event) {
+    window.open("edit_tweet.html#" + event.currentTarget.getAttribute("edit-tweet-id"), "_self"); 
+}

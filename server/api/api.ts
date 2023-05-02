@@ -153,7 +153,7 @@ export class API {
       return;
     }
     const result = await db.executeSQL(`
-      SELECT tweets.content, tweets.likes, tweets.dislike, users.name, GROUP_CONCAT(comment.comment) AS comments
+      SELECT tweets.id, tweets.content, tweets.likes, tweets.dislike, users.name, GROUP_CONCAT(comment.comment) AS comments
       FROM tweets
       LEFT JOIN users ON tweets.user_id = users.id
       LEFT JOIN comment ON tweets.id = comment.content
@@ -178,7 +178,7 @@ export class API {
     
 
     const result = await db.executeSQL(`
-      SELECT tweets.content, tweets.likes, tweets.dislike, users.name, GROUP_CONCAT(comment.comment) AS comments
+      SELECT tweets.id, tweets.content, tweets.likes, tweets.dislike, users.name, GROUP_CONCAT(comment.comment) AS comments
       FROM tweets
       LEFT JOIN users ON tweets.user_id = users.id
       LEFT JOIN comment ON tweets.id = comment.content
@@ -217,9 +217,9 @@ export class API {
       return;
     }
     const id = req.params.id;
-    const { user_id, content } = req.body;
+    const { content } = req.body;
 
-    const result = await db.executeSQL('UPDATE tweets SET `user_id`= ?, `content`= ? WHERE id = ?', [user_id, content, id]);
+    const result = await db.executeSQL('UPDATE tweets SET `content`= ? WHERE id = ?', [content, id]);
 
     if (result.affectedRows === 0) {
       res.status(400).send("There are no tweets to update");
@@ -234,11 +234,11 @@ export class API {
     }
     const id = req.params.id;
 
-    const result = await db.executeSQL('DELETE FROM comment WHERE id = ?', [id]);
+    const result = await db.executeSQL('DELETE FROM tweets WHERE id = ?', [id]);
     if (result.affectedRows === 0) {
-      res.status(400).send("There are no comment to delete");
+      res.status(400).send("There are no tweet to delete");
     } else {
-      res.status(200).send(`The comment has been deleted`);
+      res.status(200).send(`The tweet has been deleted`);
     }
   }
 
