@@ -5,6 +5,7 @@ import cookieParser from 'cookie-parser';
 import crypto from 'crypto';
 import { Database } from '../database'
 import bodyParser from 'body-parser';
+import { send } from 'vite';
 
 const db = new Database();
 dotenv.config();
@@ -67,10 +68,10 @@ export class API {
   private async login(req: Request, res: Response) {
     const { username, password } = req.body;
     console.log(username, password);
-    
+
     try {
       if (!username) {
-        res.status(400).send('Username is missing.');        
+        res.status(400).send('Username is missing.');
         return;
       }
       const result = await db.executeSQL('SELECT name, password FROM users WHERE name = ?', [username]);
@@ -108,14 +109,14 @@ export class API {
   public whoAmI(req: Request, res: Response) {
     const token = req.cookies.jwt;
     if (!this.authentication(req, res)) {
-      return;
+      return false;
     }
 
     try {
       const decodedToken = jwt.verify(token, TOKEN_SECRET) as { username: string };
       const username = decodedToken.username;
 
-      res.status(200).send(username);
+      res.send(username);
     } catch (error) {
       res.status(401).send('Unauthorized');
     }
@@ -155,27 +156,27 @@ export class API {
       FROM tweets
       LEFT JOIN users ON tweets.user_id = users.id
       LEFT JOIN comment ON tweets.id = comment.content
-      GROUP BY tweets.id;
+      GROUP BY tweets.id;    
     `);
-  
+
     if (result.length === 0) {
       res.status(400).send("There are no tweets yet");
     } else {
       res.status(200).send(result);
     }
-  }  
-  
+  }
+
   private async postTweet(req: Request, res: Response) {
     if (!this.authentication(req, res)) {
       return;
     }
-    const { user_id, content } = req.body;
+    const name = this.whoAmI(req, res);
+    const user_id = await db.executeSQL(`SELECT id FROM users WHERE name = ?`, [name]);
+    const { content } = req.body;
+    const feedback = 0;
 
     try {
-      await db.executeSQL(
-        `INSERT INTO tweets (user_id, content) VALUES (?, ?)`,
-        [user_id, content]
-      );
+      await db.executeSQL(`INSERT INTO tweets (user_id, content, likes, dislike) VALUES (?, ?, ?, ?)`, [user_id[0].id, content, feedback, feedback]);
       res.send(`Thanks for your post.`);
     } catch (error) {
       console.log(error);
@@ -189,15 +190,15 @@ export class API {
     }
     const id = req.params.id;
     const { user_id, content } = req.body;
-  
+
     const result = await db.executeSQL('UPDATE tweets SET `user_id`= ?, `content`= ? WHERE id = ?', [user_id, content, id]);
-  
+
     if (result.affectedRows === 0) {
       res.status(400).send("There are no tweets to update");
     } else {
       res.status(200).send(`The Tweet has been updated`);
     }
-  } 
+  }
 
   private async deleteTweet(req: Request, res: Response) {
     if (!this.authentication(req, res)) {
@@ -212,7 +213,7 @@ export class API {
       res.status(200).send(`The comment has been deleted`);
     }
   }
-  
+
   private async getComments(req: Request, res: Response) {
     if (!this.authentication(req, res)) {
       return;
@@ -249,9 +250,9 @@ export class API {
     }
     const id = req.params.id;
     const { comment } = req.body;
-  
+
     const result = await db.executeSQL('UPDATE comment SET `comment`= ? WHERE id = ?', [comment, id]);
-  
+
     if (result.affectedRows === 0) {
       res.status(400).send("There are no comment to update");
     } else {
@@ -292,28 +293,28 @@ export class API {
     }
     const id = req.params.id;
     const { oldPassword, name, password } = req.body;
-  
+
     const result = await db.executeSQL('SELECT password FROM users WHERE id = ?', [id]);
     if (result.length === 0) {
       res.status(400).send("User not found");
       return false;
     }
-  
+
     const storedPassword = result[0].password;
 
     if (!password || !oldPassword) {
-      const updateResultWithoutPass = await db.executeSQL('UPDATE users SET name = ? WHERE id = ?', [ name, id]);
-  
+      const updateResultWithoutPass = await db.executeSQL('UPDATE users SET name = ? WHERE id = ?', [name, id]);
+
       if (updateResultWithoutPass.affectedRows === 0) {
         res.status(400).send("Update failed");
       } else {
         res.status(200).send(`The user has been updated`);
       }
       return;
-    } 
-    
+    }
+
     const hashedOldPassword = crypto.createHash('sha256').update(oldPassword).digest('hex');
-  
+
     if (hashedOldPassword !== storedPassword) {
       res.status(400).send("Incorrect password");
       return false;
@@ -322,8 +323,8 @@ export class API {
     const hashedPassword = crypto.createHash('sha256').update(password).digest('hex');
 
     if (!name) {
-      const updateResultWithoutName = await db.executeSQL('UPDATE users SET password = ? WHERE id = ?', [ hashedPassword, id]);
-  
+      const updateResultWithoutName = await db.executeSQL('UPDATE users SET password = ? WHERE id = ?', [hashedPassword, id]);
+
       if (updateResultWithoutName.affectedRows === 0) {
         res.status(400).send("Update failed");
       } else {
@@ -333,7 +334,7 @@ export class API {
     }
 
     const updateResult = await db.executeSQL('UPDATE users SET name = ?, password = ? WHERE id = ?', [name, hashedPassword, id]);
-  
+
     if (updateResult.affectedRows === 0) {
       res.status(400).send("Update failed");
     } else {
@@ -366,7 +367,7 @@ export class API {
 
     const likeCount = await db.executeSQL('SELECT likes, dislike FROM likes WHERE id = ?', [id]);
     const dislike = likeCount[0].dislike;
-    
+
     const insertLike = likeCount[0].likes + like;
 
     await db.executeSQL('UPDATE likes SET tweet_id = ?, likes = ?, dislike = ? WHERE id = ?', [tweet_id, insertLike, dislike, id]);
@@ -380,10 +381,10 @@ export class API {
     const id = req.params.id;
     const { tweet_id } = req.body;
     const dislike = 1;
-  
+
     const dislikeCount = await db.executeSQL('SELECT likes, dislike FROM likes WHERE id = ?', [id]);
     const like = dislikeCount[0].likes;
-    
+
     const insertDislike = dislikeCount[0].dislike + dislike;
 
     await db.executeSQL('UPDATE likes SET tweet_id = ?, likes = ?, dislike = ? WHERE id = ?', [tweet_id, like, insertDislike, id]);
@@ -397,10 +398,10 @@ export class API {
     const id = req.params.id;
     const { tweet_id } = req.body;
     const like = 1;
-  
+
     const likeCount = await db.executeSQL('SELECT likes, dislike FROM likes WHERE id = ?', [id]);
     const dislike = likeCount[0].dislike;
-    
+
     const insertLike = likeCount[0].likes - like;
 
     await db.executeSQL('UPDATE likes SET tweet_id = ?, likes = ?, dislike = ? WHERE id = ?', [tweet_id, insertLike, dislike, id]);
@@ -414,13 +415,13 @@ export class API {
     const id = req.params.id;
     const { tweet_id } = req.body;
     const dislike = 1;
-  
+
     const dislikeCount = await db.executeSQL('SELECT likes, dislike FROM likes WHERE id = ?', [id]);
     const like = dislikeCount[0].likes;
-    
-    const insertDislike = dislikeCount[0].dislike - dislike;    
+
+    const insertDislike = dislikeCount[0].dislike - dislike;
 
     await db.executeSQL('UPDATE likes SET tweet_id = ?, likes = ?, dislike = ? WHERE id = ?', [tweet_id, like, insertDislike, id]);
     res.send('remove disliked successfully');
-  }  
+  }
 }
