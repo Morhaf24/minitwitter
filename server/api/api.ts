@@ -24,6 +24,7 @@ export class API {
     this.app.post('/register', this.register.bind(this));
     this.app.post('/login', this.login.bind(this));
     this.app.get('/tweets', this.getTweets.bind(this));
+    this.app.get('/myTweets', this.getMyTweets.bind(this));
     this.app.post('/tweet', this.postTweet.bind(this));
     this.app.put('/tweet/:id', this.updateTweet.bind(this));
     this.app.delete('/tweet/:id', this.deleteTweet.bind(this));
@@ -32,7 +33,7 @@ export class API {
     this.app.put('/comment/:id', this.updateComment.bind(this));
     this.app.delete('/comment/:id', this.deleteComment.bind(this));
     this.app.get('/user/:id', this.getUser.bind(this));
-    this.app.put('/user/:id', this.updateUser.bind(this));
+    this.app.put('/user', this.updateUser.bind(this));
     this.app.delete('/user/:id', this.deleteUser.bind(this));
     this.app.post('/like', this.likeTweet.bind(this));
     this.app.put('/dislike/:id', this.dislikeTweet.bind(this));
@@ -100,8 +101,8 @@ export class API {
   public authentication(req: Request, res: Response) {
     const token = req.cookies.jwt;
     if (!token) {
-      res.status(401).send('Unauthorized');
-      return;
+      res.status(401).json('Unauthorized');
+      return false;
     }
     return true;
   }
@@ -116,7 +117,7 @@ export class API {
       const decodedToken = jwt.verify(token, TOKEN_SECRET) as { username: string };
       const username = decodedToken.username;
 
-      res.send(username);
+      return username;
     } catch (error) {
       res.status(401).send('Unauthorized');
     }
@@ -156,11 +157,38 @@ export class API {
       FROM tweets
       LEFT JOIN users ON tweets.user_id = users.id
       LEFT JOIN comment ON tweets.id = comment.content
-      GROUP BY tweets.id;    
+      GROUP BY tweets.id
+      ORDER BY tweets.id desc;    
     `);
 
     if (result.length === 0) {
       res.status(400).send("There are no tweets yet");
+    } else {
+      res.status(200).send(result);
+    }
+  }
+
+  private async getMyTweets(req: Request, res: Response) {
+    if (!this.authentication(req, res)) {
+      return false;
+    }
+    const name = this.whoAmI(req, res);
+    
+    const myId = await db.executeSQL('SELECT id FROM users WHERE name = ?', [name]);
+    
+
+    const result = await db.executeSQL(`
+      SELECT tweets.content, tweets.likes, tweets.dislike, users.name, GROUP_CONCAT(comment.comment) AS comments
+      FROM tweets
+      LEFT JOIN users ON tweets.user_id = users.id
+      LEFT JOIN comment ON tweets.id = comment.content
+      WHERE tweets.user_id = ?
+      GROUP BY tweets.id
+      ORDER BY tweets.id desc;    
+    `, [myId[0].id]);
+
+    if (result.length === 0) {
+      res.status(204).send("There are no tweets yet");
     } else {
       res.status(200).send(result);
     }
@@ -291,10 +319,14 @@ export class API {
     if (!this.authentication(req, res)) {
       return;
     }
-    const id = req.params.id;
+
+    const authName = this.whoAmI(req, res);
+    
+    const myId = await db.executeSQL('SELECT id FROM users WHERE name = ?', [authName]);
+
     const { oldPassword, name, password } = req.body;
 
-    const result = await db.executeSQL('SELECT password FROM users WHERE id = ?', [id]);
+    const result = await db.executeSQL('SELECT password FROM users WHERE id = ?', [myId[0].id]);
     if (result.length === 0) {
       res.status(400).send("User not found");
       return false;
@@ -303,7 +335,7 @@ export class API {
     const storedPassword = result[0].password;
 
     if (!password || !oldPassword) {
-      const updateResultWithoutPass = await db.executeSQL('UPDATE users SET name = ? WHERE id = ?', [name, id]);
+      const updateResultWithoutPass = await db.executeSQL('UPDATE users SET name = ? WHERE id = ?', [name, myId[0].id]);
 
       if (updateResultWithoutPass.affectedRows === 0) {
         res.status(400).send("Update failed");
@@ -323,7 +355,7 @@ export class API {
     const hashedPassword = crypto.createHash('sha256').update(password).digest('hex');
 
     if (!name) {
-      const updateResultWithoutName = await db.executeSQL('UPDATE users SET password = ? WHERE id = ?', [hashedPassword, id]);
+      const updateResultWithoutName = await db.executeSQL('UPDATE users SET password = ? WHERE id = ?', [hashedPassword, myId[0].id]);
 
       if (updateResultWithoutName.affectedRows === 0) {
         res.status(400).send("Update failed");
@@ -333,7 +365,7 @@ export class API {
       return;
     }
 
-    const updateResult = await db.executeSQL('UPDATE users SET name = ?, password = ? WHERE id = ?', [name, hashedPassword, id]);
+    const updateResult = await db.executeSQL('UPDATE users SET name = ?, password = ? WHERE id = ?', [name, hashedPassword, myId[0].id]);
 
     if (updateResult.affectedRows === 0) {
       res.status(400).send("Update failed");

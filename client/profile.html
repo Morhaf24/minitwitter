@@ -15,11 +15,23 @@
     <a class="nav_profile" href="profile.html">Profile</a>
   </nav>
 
+  <div class="create_post" id="edit_username">
+    <input type="" placeholder="username" class="post_input" id="username_input">
+    <button class="new_post" id="username_save">save</button>
+  </div>
+
+  <div class="create_post" id="edit_password">
+    <input type="password" placeholder="password" class="post_input" id="password_input">
+    <button class="new_post" id="password_save">save</button>  
+  </div>
+
   <div class="create_post" id="create_post">
     <input type="" placeholder="Create a new Post..." class="post_input" id="post_input">
     <button class="new_post" id="new_post">Share</button>
   </div>
-  <div class="mainWindow"></div>
 
-  <script src="list_posts.js"></script>
+  <div class="mainWindow" id="mainWindow"></div>
+
+  <script src="profile.js"></script>
+  <script src="post.js"></script>
 </body>
