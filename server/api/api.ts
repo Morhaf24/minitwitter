@@ -29,7 +29,7 @@ export class API {
     this.app.put('/tweet/:id', this.updateTweet.bind(this));
     this.app.delete('/tweet/:id', this.deleteTweet.bind(this));
     this.app.get('/comments', this.getComments.bind(this));
-    this.app.post('/comment', this.postComment.bind(this));
+    this.app.post('/comment/:content', this.postComment.bind(this));
     this.app.put('/comment/:id', this.updateComment.bind(this));
     this.app.delete('/comment/:id', this.deleteComment.bind(this));
     this.app.get('/user/:id', this.getUser.bind(this));
@@ -258,17 +258,16 @@ export class API {
     if (!this.authentication(req, res)) {
       return;
     }
-    const { user_id, comment, content } = req.body;
+    const name = this.whoAmI(req, res);
+    const user_id = await db.executeSQL(`SELECT id FROM users WHERE name = ?`, [name]);
+    const { comment } = req.body;
+    const content = req.params.content;
 
     try {
-      await db.executeSQL(
-        `INSERT INTO comment (user_id, comment, content) VALUES (?, ?, ?)`,
-        [user_id, comment, content]
-      );
-      res.send(`Thanks for your comment.`);
+      await db.executeSQL(`INSERT INTO comment (user_id, comment, content) VALUES (?, ?, ?)`, [user_id[0].id, comment, content]);
+      res.status(200).send(`Thanks for your comment.`);
     } catch (error) {
-      console.log(error);
-      res.status(500).send('Failed to comment.');
+      res.status(400).send('Failed to comment.');
     }
   }
 

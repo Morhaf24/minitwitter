@@ -1,6 +1,7 @@
 const createPost = document.getElementById("create_post");
 const postInput = document.getElementById("post_input");
 const mainWindow = document.getElementById("mainWindow");
+let commentRequest;
 
 let listRequest = new XMLHttpRequest();
 listRequest.open("GET", "http://localhost:4200/tweets");
@@ -60,6 +61,9 @@ function onListResponse() {
             commentDiv.innerHTML = "Comments";
             commentDiv.innerHTML = tweetsResponse[i].comments || "no comments";
             commentDiv.className = "commentDiv";
+            commentInput.setAttribute("input", commentInput)
+            commentButton.setAttribute("comment-content-id", tweetsResponse[i].id);
+            commentButton.addEventListener("click", onCommentButtonPressed);
             tweetsDiv.appendChild(commentInput);
             tweetsDiv.appendChild(commentButton)
             tweetsDiv.appendChild(commentDiv);
@@ -92,7 +96,7 @@ function onListResponse() {
 }
 
 function onDeleteButtonPressed(event) {
-    deleteRequest = new XMLHttpRequest();
+    let deleteRequest = new XMLHttpRequest();
     deleteRequest.open("Delete", "http://localhost:4200/tweet/" + event.currentTarget.getAttribute("delete-tweet-id"));
     deleteRequest.onreadystatechange = onCategoryDeleteResponsed;
     deleteRequest.send();
@@ -117,3 +121,31 @@ else {
 function onEditButtonPressed(event) {
     window.open("edit_tweet.html#" + event.currentTarget.getAttribute("edit-tweet-id"), "_self"); 
 }
+
+function onCommentButtonPressed(event) {
+    let commentData = {
+        comment: event.currentTarget.previousSibling.value
+    };
+    
+    commentRequest = new XMLHttpRequest();
+    commentRequest.open("POST", "http://localhost:4200/comment/" + event.currentTarget.getAttribute("comment-content-id"));
+    commentRequest.setRequestHeader("Content-Type", "application/json");
+    commentRequest.onreadystatechange = onCommentResponsed;
+    commentRequest.send(JSON.stringify(commentData));  
+}
+
+
+function onCommentResponsed(event) {
+    if (commentRequest.readyState < 4) {
+        return;
+    }
+
+    let responseStatus = commentRequest.status;
+
+    if (responseStatus === 200) {
+       alert("Successfuly updated.");
+       window.location.replace('http://localhost:4200/home.html')
+    }
+    else {
+       alert("Error: Please try again");
+    }}
