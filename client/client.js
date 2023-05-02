@@ -34,7 +34,7 @@ function onLoginResponse() {
   if (loginRequest.readyState < 4) {
     const responseStatus = loginRequest.status;
     if (responseStatus === 200) {
-      alert("Success");
+      window.location.replace('http://localhost:4200/home.html')
     } else {
       alert("Login failed");
     }

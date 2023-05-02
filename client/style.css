@@ -50,7 +50,6 @@ button.log-in {
   margin: auto;
   margin-left: 200px;
   font-size: large;
-
 }
 
 span {
@@ -153,8 +152,9 @@ div.profileDiv {
 div.tweetDiv {
   color: black;
   font-size: larger;
-  height: 100px;
+  height: 400px;
   background-color: rgb(50, 175, 240);
+  border-radius: 5px;
 }
 
 div.likesDiv {
@@ -175,14 +175,74 @@ div.commentDiv {
   color: black;
   font-size: larger;
   background-color: rgb(113, 166, 213);
+  border-radius: 5px;
+  margin-top: 5px;
 }
 
 div.tweetsDiv {
   margin-top: 50px;
-  width: 90%;
+  width: 50%;
   height: 0;
   border: none;
   display: inline-block;
-  margin-left: 5%;
+  margin-left: 25%;
   background-color: rgb(50, 175, 240);
+}
+
+button.likeButton {
+  width: 100px;
+  height: 30px;
+  border: none;
+  border-radius: 17px;
+  color: black;
+  margin: auto;
+  margin-left: 10px;
+  font-size: large;
+}
+
+button.likeButton:hover {
+  color: blue;
+  font-size: larger;
+}
+
+button.disLikeButton {
+  width: 100px;
+  height: 30px;
+  border: none;
+  border-radius: 17px;
+  color: black;
+  margin: auto;
+  margin-left: 10px;
+  font-size: large;
+}
+
+button.disLikeButton:hover {
+  color: red;
+  font-size: larger;
+}
+
+input.commentInput {
+  width: 84%;
+  height: 30px;
+  margin-top: 10px;
+  border: none;
+  border-radius: 10px;
+  padding-left: 8px;
+  display: inline-block;
+}
+
+button.commentButton {
+  height: 30px;
+  border: none;
+  border-radius: 17px;
+  color: black;
+  margin: auto;
+  margin-left: 10px;
+  font-size: large;
+}
+
+button.commentButton:hover {
+  background-color: black;
+  color: white;
+  font-size: larger;
 }
