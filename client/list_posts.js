@@ -62,7 +62,6 @@ function onListResponse() {
             commentButton.innerHTML = "comment"
             commentInput.className = "commentInput";
             commentInput.placeholder = "Comment";
-            commentDiv.innerHTML = "Comments";
             commentDiv.innerHTML = tweetsResponse[i].comments || "no comments";
             commentDiv.className = "commentDiv";
             commentInput.setAttribute("input", commentInput)

@@ -68,7 +68,6 @@ export class API {
 
   private async login(req: Request, res: Response) {
     const { username, password } = req.body;
-    console.log(username, password);
 
     try {
       if (!username) {
@@ -131,22 +130,21 @@ export class API {
     try {
       const decodedToken = jwt.verify(token, TOKEN_SECRET) as { username: string };
       const username = decodedToken.username;
-
+  
       const result = await db.executeSQL('SELECT role FROM users WHERE name = ?', [username]);
-      if (result[0].role === "A") {
-        res.status(200).send(result[0].role);
+  
+      let role = result[0].role;
+      if (role === "A" || role === "M") {
         return true;
       }
-      else if (result[0].role === "M") {
-        res.status(200).send(result[0].role);
-        return true;
-      }
-      res.status(200).send(result[0].role);
+  
+      res.status(200).send(role);
       return false;
     } catch (error) {
       res.status(401).send('Unauthorized');
     }
   }
+  
 
   private async getTweets(req: Request, res: Response) {
     if (!this.authentication(req, res)) {
@@ -155,15 +153,15 @@ export class API {
     const result = await db.executeSQL(`
       SELECT tweets.id, tweets.content, users.name, 
       (SELECT likes FROM likes WHERE likes.tweet_id = tweets.id) AS likes, 
-      (SELECT dislike FROM likes WHERE likes.tweet_id = tweets.id) AS dislike, 
-      GROUP_CONCAT(comment.comment) AS comments
+      (SELECT dislike FROM likes WHERE likes.tweet_id = tweets.id) AS dislike,
+      GROUP_CONCAT(CONCAT(' ', users_comment.name, ': ', comment.comment)) AS comments
       FROM tweets
       LEFT JOIN users ON tweets.user_id = users.id
       LEFT JOIN comment ON tweets.id = comment.content
+      LEFT JOIN users AS users_comment ON comment.user_id = users_comment.id
       GROUP BY tweets.id
-      ORDER BY tweets.id DESC;  
-    `);
-
+      ORDER BY tweets.id DESC;
+  `);  
 
     if (result.length === 0) {
       res.status(204).send("There are no tweets yet");
@@ -184,11 +182,12 @@ export class API {
     const result = await db.executeSQL(`
       SELECT tweets.id, tweets.content, users.name, 
       (SELECT likes FROM likes WHERE likes.tweet_id = tweets.id) AS likes, 
-      (SELECT dislike FROM likes WHERE likes.tweet_id = tweets.id) AS dislike, 
-      GROUP_CONCAT(comment.comment) AS comments
+      (SELECT dislike FROM likes WHERE likes.tweet_id = tweets.id) AS dislike,
+      GROUP_CONCAT(CONCAT(' ', users_comment.name, ': ', comment.comment)) AS comments
       FROM tweets
       LEFT JOIN users ON tweets.user_id = users.id
       LEFT JOIN comment ON tweets.id = comment.content
+      LEFT JOIN users AS users_comment ON comment.user_id = users_comment.id
       GROUP BY tweets.id
       ORDER BY tweets.id DESC;
     `, [myId[0].id]);
@@ -224,21 +223,51 @@ export class API {
     }
     const id = req.params.id;
     const { content } = req.body;
-
-    const result = await db.executeSQL('UPDATE tweets SET `content`= ? WHERE id = ?', [content, id]);
-
-    if (result.affectedRows === 0) {
-      res.status(400).send("There are no tweets to update");
-    } else {
-      res.status(200).send(`The Tweet has been updated`);
+  
+    const name = this.whoAmI(req, res);
+    const myRole = await db.executeSQL(`SELECT id FROM users WHERE name = ?`, [name]);
+    const tweetId = await db.executeSQL(`SELECT user_id FROM tweets WHERE id = ?`, [id]);
+  
+    if (myRole.length === 0 || tweetId.length === 0) {
+      return res.status(400).send("Invalid tweet ID or user");
     }
-  }
+  
+    if (myRole[0].id !== tweetId[0].user_id) {
+      const role = await this.getRole(req, res);
+      if (!role) {
+        return;
+      }
+    }
+  
+    const result = await db.executeSQL('UPDATE tweets SET `content`= ? WHERE id = ?', [content, id]);
+  
+    if (result.affectedRows === 0) {
+      return res.status(400).send("There are no tweets to update");
+    }
+  
+    return res.status(200).send(`The Tweet has been updated`);
+  }  
 
   private async deleteTweet(req: Request, res: Response) {
     if (!this.authentication(req, res)) {
       return;
     }
     const id = req.params.id;
+
+    const name = this.whoAmI(req, res);
+    const myRole = await db.executeSQL(`SELECT id FROM users WHERE name = ?`, [name]);
+    const tweetId = await db.executeSQL(`SELECT user_id FROM tweets WHERE id = ?`, [id]);
+  
+    if (myRole.length === 0 || tweetId.length === 0) {
+      return res.status(400).send("Invalid tweet ID or user");
+    }
+  
+    if (myRole[0].id !== tweetId[0].user_id) {
+      const role = await this.getRole(req, res);
+      if (!role) {
+        return;
+      }
+    }
 
     const result = await db.executeSQL('DELETE FROM tweets WHERE id = ?', [id]);
     if (result.affectedRows === 0) {
@@ -284,6 +313,21 @@ export class API {
     const id = req.params.id;
     const { comment } = req.body;
 
+    const name = this.whoAmI(req, res);
+    const myRole = await db.executeSQL(`SELECT id FROM users WHERE name = ?`, [name]);
+    const commentId = await db.executeSQL(`SELECT user_id FROM comment WHERE id = ?`, [id]);
+  
+    if (myRole.length === 0 || commentId.length === 0) {
+      return res.status(400).send("Invalid tweet ID or user");
+    }
+  
+    if (myRole[0].id !== commentId[0].user_id) {
+      const role = await this.getRole(req, res);
+      if (!role) {
+        return;
+      }
+    }
+
     const result = await db.executeSQL('UPDATE comment SET `comment`= ? WHERE id = ?', [comment, id]);
 
     if (result.affectedRows === 0) {
@@ -298,6 +342,21 @@ export class API {
       return;
     }
     const id = req.params.id;
+
+    const name = this.whoAmI(req, res);
+    const myRole = await db.executeSQL(`SELECT id FROM users WHERE name = ?`, [name]);
+    const commentId = await db.executeSQL(`SELECT user_id FROM comment WHERE id = ?`, [id]);
+  
+    if (myRole.length === 0 || commentId.length === 0) {
+      return res.status(400).send("Invalid tweet ID or user");
+    }
+  
+    if (myRole[0].id !== commentId[0].user_id) {
+      const role = await this.getRole(req, res);
+      if (!role) {
+        return;
+      }
+    }
 
     const result = await db.executeSQL('DELETE FROM comment WHERE id = ?', [id]);
     if (result.affectedRows === 0) {
