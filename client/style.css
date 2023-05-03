@@ -3,7 +3,7 @@ body {
   background-color: rgb(50, 100, 200);
 }
 
-.login {
+div.login {
   width: 500px;
   overflow: hidden;
   margin: auto;
@@ -24,7 +24,7 @@ label {
   font-size: 17px;
 }
 
-.username {
+input.username {
   width: 300px;
   height: 30px;
   border: none;
@@ -32,7 +32,7 @@ label {
   padding-left: 8px;
 }
 
-.password {
+input.password {
   width: 300px;
   height: 30px;
   border: none;
@@ -50,11 +50,6 @@ button.log-in {
   margin: auto;
   margin-left: 200px;
   font-size: large;
-}
-
-span {
-  color: white;
-  font-size: 17px;
 }
 
 div button.log-in:hover {
@@ -77,6 +72,7 @@ nav {
   position: relative;
   margin: 0px;
   height: 65px;
+  border-radius: 10px;
 }
 
 .nav_home {
@@ -124,7 +120,7 @@ nav a:hover {
   display: inline-block;
 }
 
-.new_post {
+button.new_post {
   background-color: white;
   width: 100px;
   height: 30px;
@@ -137,7 +133,7 @@ nav a:hover {
   display: inline-block;
 }
 
-.new_post:hover {
+button.new_post:hover {
   background-color: black;
   color: white;
   font-size: larger;
@@ -285,12 +281,53 @@ button.editButton:hover {
   font-size: larger;
 }
 
-.edit_username {
+div.edit_username {
   display: inline-block;
-  margin-left: 12%;
+  margin-left: 10%;
 }
 
-.edit_password {
+div.edit_password {
   display: inline-block;
-  margin-left: 11%;
+  margin-left: 10%;
+}
+
+input.new_password {
+  width: 300px;
+  height: 30px;
+  border: none;
+  border-radius: 20px;
+  padding-left: 8px;
+  margin-top: 10px;
+}
+
+input.old_password {
+  width: 300px;
+  height: 30px;
+  border: none;
+  border-radius: 20px;
+  padding-left: 8px;
+  margin-top: 10px;
+  display: inline-block;
+}
+
+button.save_password {
+  display: inline-block;
+  width: 100px;
+  height: 30px;
+  border: none;
+  border-radius: 17px;
+  color: black;
+  margin: auto;
+  margin-left: 80%;
+  font-size: large; 
+}
+
+button.save_password:hover {
+  background-color: black;
+  color: white;
+  font-size: larger;
+}
+
+.profileName {
+  color: white;
 }
