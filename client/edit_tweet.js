@@ -29,6 +29,9 @@ function onEditResponsed(event) {
        alert("Successfuly updated.");
        window.location.replace('http://localhost:4200/home.html')
     }
+    else if (responseStatus === 403) {
+        alert("You can't edit this tweet")
+    }
     else {
        alert("Error: Please try again");
     }}

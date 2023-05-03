@@ -3,6 +3,11 @@ const postInput = document.getElementById("post_input");
 const mainWindow = document.getElementById("mainWindow");
 const passwordForm = document.getElementById("edit_password");
 const passwordInput = document.getElementById("password_input");
+const usernameForm = document.getElementById("edit_username");
+const usernameInput = document.getElementById("username_input");
+const logout = document.getElementById("logout");
+let logoutRequest;
+let usernameRequest;
 let passwordRequest;
 
 let myTweetsRequest = new XMLHttpRequest();
@@ -79,9 +84,6 @@ function onListResponse() {
     }
 }
 
-const usernameForm = document.getElementById("edit_username");
-const usernameInput = document.getElementById("username_input");
-let usernameRequest;
 
 usernameForm.addEventListener("submit", onUsernameFormSubmitted);
 
@@ -91,8 +93,6 @@ function onUsernameFormSubmitted(event) {
     const usernameData = {
         name: usernameInput.value
     };
-
-    console.log(usernameData);
     
     usernameRequest = new XMLHttpRequest();
     usernameRequest.open("PUT", "http://localhost:4200/user");
@@ -119,7 +119,29 @@ passwordForm.addEventListener("submit", onPasswordFormPressed);
 function onPasswordFormPressed(event) {
     event.preventDefault();
 
+    const passwordData = {
+        oldPassword: oldPasswordInput.value,
+        password: passwordInput.value
+        };
 
+        passwordRequest = new XMLHttpRequest();
+        passwordRequest.open("PUT", "http://localhost:4200/user");
+        passwordRequest.setRequestHeader("Content-Type", "application/json");
+        passwordRequest.onreadystatechange = onPasswordResponse;
+        passwordRequest.send(JSON.stringify(passwordData));
+}
+
+function onPasswordResponse() {
+    if (passwordRequest.readyState < 4) {
+    return;
+    }
+      const responseStatus = passwordRequest.status;
+      if (responseStatus === 200) {
+        alert("Success");
+        window.location.replace('http://localhost:4200')
+      } else {
+        alert("Login failed");
+      }
 }
 
 function onDeleteButtonPressed(event) {
@@ -147,4 +169,27 @@ else {
 
 function onEditButtonPressed(event) {
     window.open("edit_tweet.html#" + event.currentTarget.getAttribute("edit-tweet-id"), "_self"); 
+}
+
+logout.addEventListener("click", onLogoutRequest);
+
+function onLogoutRequest(event) {
+    event.preventDefault();
+
+    logoutRequest = new XMLHttpRequest();
+    logoutRequest.open("POST", "http://localhost:4200/logout");
+    logoutRequest.onreadystatechange = onlogoutResponsed;
+    logoutRequest.send();
+}
+
+function onlogoutResponsed() {
+    if (logoutRequest.readyState < 4) {
+        return;
+    }
+
+    responseStatus = logoutRequest.status;
+
+    if (responseStatus === 200) {
+        window.location.replace('http://localhost:4200')
+    }
 }

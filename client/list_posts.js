@@ -1,6 +1,8 @@
 const createPost = document.getElementById("create_post");
 const postInput = document.getElementById("post_input");
 const mainWindow = document.getElementById("mainWindow");
+const logout = document.getElementById("logout");
+let logoutRequest;
 let commentRequest;
 
 let listRequest = new XMLHttpRequest();
@@ -120,6 +122,9 @@ if (responseStatus === 200) {
     alert("Deleted");
     window.location.reload();
 }
+else if (responseStatus === 403) {
+    alert("You can't delete this tweet")
+}
 else {
     alert("Not found");
 }
@@ -188,16 +193,39 @@ function onDislikeButtonPressed(event) {
 }
 
 function onDislikeResponsed() {
-if (likeRequest.readyState < 4) {
-    return;
+    if (likeRequest.readyState < 4) {
+        return;
+    }
+
+    responseStatus = likeRequest.status;
+
+    if (responseStatus === 200) {
+        window.location.reload();
+    }
+    else {
+        alert("Not found");
+    }
 }
 
-responseStatus = likeRequest.status;
+logout.addEventListener("click", onLogoutRequest);
 
-if (responseStatus === 200) {
-    window.location.reload();
+function onLogoutRequest(event) {
+    event.preventDefault();
+
+    logoutRequest = new XMLHttpRequest();
+    logoutRequest.open("POST", "http://localhost:4200/logout");
+    logoutRequest.onreadystatechange = onlogoutResponsed;
+    logoutRequest.send();
 }
-else {
-    alert("Not found");
-}
+
+function onlogoutResponsed() {
+    if (logoutRequest.readyState < 4) {
+        return;
+    }
+
+    responseStatus = logoutRequest.status;
+
+    if (responseStatus === 200) {
+        window.location.replace('http://localhost:4200')
+    }
 }

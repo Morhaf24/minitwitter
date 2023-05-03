@@ -23,6 +23,7 @@ export class API {
     this.app.use(bodyParser.urlencoded({ extended: true }));
     this.app.post('/register', this.register.bind(this));
     this.app.post('/login', this.login.bind(this));
+    this.app.post('/logout', this.logout.bind(this));
     this.app.get('/tweets', this.getTweets.bind(this));
     this.app.get('/myTweets', this.getMyTweets.bind(this));
     this.app.post('/tweet', this.postTweet.bind(this));
@@ -97,6 +98,11 @@ export class API {
     return jwt.sign(username, TOKEN_SECRET, { expiresIn: '18000s' });
   }
 
+  private async logout(req: Request, res: Response) {
+    res.clearCookie('jwt');
+    res.status(200).send('Logout successful.');
+  }
+
   public authentication(req: Request, res: Response) {
     const token = req.cookies.jwt;
     if (!token) {
@@ -138,7 +144,7 @@ export class API {
         return true;
       }
   
-      res.status(200).send(role);
+      res.status(403).send(role);
       return false;
     } catch (error) {
       res.status(401).send('Unauthorized');
@@ -188,6 +194,7 @@ export class API {
       LEFT JOIN users ON tweets.user_id = users.id
       LEFT JOIN comment ON tweets.id = comment.content
       LEFT JOIN users AS users_comment ON comment.user_id = users_comment.id
+      WHERE users.id = ?
       GROUP BY tweets.id
       ORDER BY tweets.id DESC;
     `, [myId[0].id]);
