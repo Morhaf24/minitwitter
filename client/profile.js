@@ -56,6 +56,11 @@ function onListResponse() {
 
             const profileName = document.getElementById("profile_name");
             profileName.innerHTML = "Welcome " + tweetsResponse[i].name + " ^_^";
+            if (tweetsResponse[i].name === "admin") {
+                const adminNav = document.getElementById("admin-nav");
+                adminNav.innerHTML = "admin";
+                adminNav.addEventListener("click", onAdminNavClicked)
+            }
 
             let deleteAndEditCell = document.createElement("div");
             tweetsDiv.appendChild(deleteAndEditCell);
@@ -192,4 +197,8 @@ function onlogoutResponsed() {
     if (responseStatus === 200) {
         window.location.replace('http://localhost:4200')
     }
+}
+
+function onAdminNavClicked(event) {
+    window.open("admin.html"); 
 }
