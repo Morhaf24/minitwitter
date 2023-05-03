@@ -35,7 +35,9 @@ function onListResponse() {
             let likeDiv = document.createElement("div");
             let likeButton = document.createElement("button")
             likeButton.className = "likeButton";
-            likeButton.innerHTML = "like"
+            likeButton.innerHTML = "like";
+            likeButton.setAttribute("like-id", tweetsResponse[i].id);
+            likeButton.addEventListener("click", onLikeButtonPressed);
             likeDiv.innerHTML = tweetsResponse[i].likes || "0";
             likeDiv.className = "likesDiv";
             likeDiv.appendChild(likeButton);
@@ -44,7 +46,9 @@ function onListResponse() {
             let dislikeDiv = document.createElement("div");
             let disLikeButton = document.createElement("button")
             disLikeButton.className = "disLikeButton";
-            disLikeButton.innerHTML = "dislike"
+            disLikeButton.innerHTML = "dislike";
+            disLikeButton.setAttribute("like-id", tweetsResponse[i].id);
+            disLikeButton.addEventListener("click", onDislikeButtonPressed);
             dislikeDiv.innerHTML = tweetsResponse[i].dislike || "0";;
             dislikeDiv.className = "dislikesDiv";
             likeDiv.appendChild(dislikeDiv);
@@ -88,7 +92,8 @@ function onListResponse() {
         }
     }
     else if (tweetsResponseStatus === 401) {
-        alert("Unauthorized")
+        alert("Unauthorized");
+        window.location.replace('http://localhost:4200');
     }
     else if (tweetsResponseStatus === 204) {
         alert("No tweets found")
@@ -99,13 +104,13 @@ function onListResponse() {
 }
 
 function onDeleteButtonPressed(event) {
-    let deleteRequest = new XMLHttpRequest();
+    deleteRequest = new XMLHttpRequest();
     deleteRequest.open("Delete", "http://localhost:4200/tweet/" + event.currentTarget.getAttribute("delete-tweet-id"));
-    deleteRequest.onreadystatechange = onCategoryDeleteResponsed;
+    deleteRequest.onreadystatechange = onDeleteResponsed;
     deleteRequest.send();
 }
 
-function onCategoryDeleteResponsed() {
+function onDeleteResponsed() {
 if (deleteRequest.readyState < 4) {
     return;
 }
@@ -152,3 +157,48 @@ function onCommentResponsed(event) {
     else {
        alert("Error: Please try again");
     }}
+
+    
+function onLikeButtonPressed(event) {
+    likeRequest = new XMLHttpRequest();
+    likeRequest.open("PUT", "http://localhost:4200/like/" + event.currentTarget.getAttribute("like-id"));
+    likeRequest.onreadystatechange = onLikeResponsed;
+    likeRequest.send();
+}
+
+function onLikeResponsed() {
+if (likeRequest.readyState < 4) {
+    return;
+}
+
+responseStatus = likeRequest.status;
+
+if (responseStatus === 200) {
+    window.location.reload();
+}
+else {
+    alert("Not found");
+}
+}
+
+function onDislikeButtonPressed(event) {
+    likeRequest = new XMLHttpRequest();
+    likeRequest.open("PUT", "http://localhost:4200/dislike/" + event.currentTarget.getAttribute("like-id"));
+    likeRequest.onreadystatechange = onDislikeResponsed;
+    likeRequest.send();
+}
+
+function onDislikeResponsed() {
+if (likeRequest.readyState < 4) {
+    return;
+}
+
+responseStatus = likeRequest.status;
+
+if (responseStatus === 200) {
+    window.location.reload();
+}
+else {
+    alert("Not found");
+}
+}

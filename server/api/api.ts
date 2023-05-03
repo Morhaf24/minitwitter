@@ -35,8 +35,8 @@ export class API {
     this.app.get('/user/:id', this.getUser.bind(this));
     this.app.put('/user', this.updateUser.bind(this));
     this.app.delete('/user/:id', this.deleteUser.bind(this));
-    this.app.post('/like', this.likeTweet.bind(this));
-    this.app.put('/dislike/:id', this.dislikeTweet.bind(this));
+    this.app.put('/like/:tweet_id', this.likeTweet.bind(this));
+    this.app.put('/dislike/:tweet_id', this.dislikeTweet.bind(this));
     this.app.put('/deleteLike/:id', this.deleteLike.bind(this));
     this.app.put('/deleteDisike/:id', this.deleteDisike.bind(this));
     this.app.get('/whoAmI', this.whoAmI.bind(this));
@@ -95,7 +95,7 @@ export class API {
   }
 
   private generateAccessToken(username: { username: string }) {
-    return jwt.sign(username, TOKEN_SECRET, { expiresIn: '1800s' });
+    return jwt.sign(username, TOKEN_SECRET, { expiresIn: '18000s' });
   }
 
   public authentication(req: Request, res: Response) {
@@ -153,13 +153,17 @@ export class API {
       return;
     }
     const result = await db.executeSQL(`
-      SELECT tweets.id, tweets.content, tweets.likes, tweets.dislike, users.name, GROUP_CONCAT(comment.comment) AS comments
+      SELECT tweets.id, tweets.content, users.name, 
+      (SELECT likes FROM likes WHERE likes.tweet_id = tweets.id) AS likes, 
+      (SELECT dislike FROM likes WHERE likes.tweet_id = tweets.id) AS dislike, 
+      GROUP_CONCAT(comment.comment) AS comments
       FROM tweets
       LEFT JOIN users ON tweets.user_id = users.id
       LEFT JOIN comment ON tweets.id = comment.content
       GROUP BY tweets.id
-      ORDER BY tweets.id desc;    
+      ORDER BY tweets.id DESC;  
     `);
+
 
     if (result.length === 0) {
       res.status(204).send("There are no tweets yet");
@@ -178,13 +182,15 @@ export class API {
     
 
     const result = await db.executeSQL(`
-      SELECT tweets.id, tweets.content, tweets.likes, tweets.dislike, users.name, GROUP_CONCAT(comment.comment) AS comments
+      SELECT tweets.id, tweets.content, users.name, 
+      (SELECT likes FROM likes WHERE likes.tweet_id = tweets.id) AS likes, 
+      (SELECT dislike FROM likes WHERE likes.tweet_id = tweets.id) AS dislike, 
+      GROUP_CONCAT(comment.comment) AS comments
       FROM tweets
       LEFT JOIN users ON tweets.user_id = users.id
       LEFT JOIN comment ON tweets.id = comment.content
-      WHERE tweets.user_id = ?
       GROUP BY tweets.id
-      ORDER BY tweets.id desc;    
+      ORDER BY tweets.id DESC;
     `, [myId[0].id]);
 
     if (result.length === 0) {
@@ -391,36 +397,63 @@ export class API {
     if (!this.authentication(req, res)) {
       return;
     }
-    let id = req.params.id;
-    const { tweet_id } = req.body;
-    const like = 1;
-    const dislikeNow = 0;
-
-    const likeCount = await db.executeSQL('SELECT likes, dislike FROM likes WHERE id = ?', [id]);
+  
+    const tweet_id = req.params.tweet_id;
+  
+    let check = await db.executeSQL('SELECT id FROM likes WHERE tweet_id = ?', [tweet_id]);
+    const likes = 1;
+  
+    if (check.length === 0) {
+      const newLike = await db.executeSQL(`INSERT INTO likes (tweet_id, likes, dislike) VALUES (?, ?, ?)`, [tweet_id, likes, 0]);
+      if (newLike) {
+        res.status(200).send('New like has been created');
+        return true;
+      }
+    }
+  
+    const likeCount = await db.executeSQL('SELECT likes, dislike FROM likes WHERE id = ?', [check[0].id]);
     const dislike = likeCount[0].dislike;
-
-    const insertLike = likeCount[0].likes + like;
-
-    await db.executeSQL('UPDATE likes SET tweet_id = ?, likes = ?, dislike = ? WHERE id = ?', [tweet_id, insertLike, dislike, id]);
-    res.send('Tweet liked successfully');
+    const insertLike = likeCount[0].likes + likes;
+  
+    const result = await db.executeSQL('UPDATE likes SET likes = ?, dislike = ? WHERE tweet_id = ?', [insertLike, dislike, tweet_id]);
+  
+    if (result) {
+      res.status(200).send('Tweet liked successfully');
+      return true;
+    }
+    res.status(400).send('Try again');
   }
 
   private async dislikeTweet(req: Request, res: Response) {
     if (!this.authentication(req, res)) {
       return;
     }
-    const id = req.params.id;
-    const { tweet_id } = req.body;
+  
+    const tweet_id = req.params.tweet_id;
+  
+    let check = await db.executeSQL('SELECT id FROM likes WHERE tweet_id = ?', [tweet_id]);
     const dislike = 1;
-
-    const dislikeCount = await db.executeSQL('SELECT likes, dislike FROM likes WHERE id = ?', [id]);
+  
+    if (check.length === 0) {
+      const newLike = await db.executeSQL(`INSERT INTO likes (tweet_id, likes, dislike) VALUES (?, ?, ?)`, [tweet_id, 0, dislike]);
+      if (newLike) {
+        res.status(200).send('New like has been created');
+        return true;
+      }
+    }
+  
+    const dislikeCount = await db.executeSQL('SELECT likes, dislike FROM likes WHERE id = ?', [check[0].id]);
     const like = dislikeCount[0].likes;
-
     const insertDislike = dislikeCount[0].dislike + dislike;
-
-    await db.executeSQL('UPDATE likes SET tweet_id = ?, likes = ?, dislike = ? WHERE id = ?', [tweet_id, like, insertDislike, id]);
-    res.send('Tweet disliked successfully');
-  }
+  
+    const result = await db.executeSQL('UPDATE likes SET likes = ?, dislike = ? WHERE tweet_id = ?', [like, insertDislike, tweet_id]);
+  
+    if (result) {
+      res.status(200).send('Tweet disliked successfully');
+      return true;
+    }
+    res.status(400).send('Try again');
+  }  
 
   private async deleteLike(req: Request, res: Response) {
     if (!this.authentication(req, res)) {
