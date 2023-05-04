@@ -33,8 +33,9 @@ export class API {
     this.app.post('/comment/:content', this.postComment.bind(this));
     this.app.put('/comment/:id', this.updateComment.bind(this));
     this.app.delete('/comment/:id', this.deleteComment.bind(this));
-    this.app.get('/user/:id', this.getUser.bind(this));
+    this.app.get('/users', this.getUsers.bind(this));
     this.app.put('/user', this.updateUser.bind(this));
+    this.app.put('/user/:id', this.updateUserByAdmin.bind(this));
     this.app.delete('/user/:id', this.deleteUser.bind(this));
     this.app.put('/like/:tweet_id', this.likeTweet.bind(this));
     this.app.put('/dislike/:tweet_id', this.dislikeTweet.bind(this));
@@ -151,6 +152,28 @@ export class API {
     }
   }
   
+  public async getAdminRole(req: Request, res: Response) {
+    const token = req.cookies.jwt;
+    if (!this.authentication(req, res)) {
+      return;
+    }
+    try {
+      const decodedToken = jwt.verify(token, TOKEN_SECRET) as { username: string };
+      const username = decodedToken.username;
+  
+      const result = await db.executeSQL('SELECT role FROM users WHERE name = ?', [username]);
+  
+      let role = result[0].role;
+      if (role === "A") {
+        return true;
+      }
+  
+      res.status(403).send(role);
+      return false;
+    } catch (error) {
+      res.status(401).send('Unauthorized');
+    }
+  }
 
   private async getTweets(req: Request, res: Response) {
     if (!this.authentication(req, res)) {
@@ -373,16 +396,31 @@ export class API {
     }
   }
 
-  private async getUser(req: Request, res: Response) {
+  private async getUsers(req: Request, res: Response) {
     if (!this.authentication(req, res)) {
       return;
     }
-    const id = req.params.id;
-    const result = await db.executeSQL('SELECT name FROM users WHERE id = ?', [id]);
+
+    const name = this.whoAmI(req, res);
+    const myRole = await db.executeSQL(`SELECT id FROM users WHERE name = ?`, [name]);
+    const adminId = await db.executeSQL(`SELECT id FROM users WHERE id = ?`, [1]);
+  
+    if (myRole.length === 0 || adminId.length === 0) {
+      return res.status(400).send("Invalid tweet ID or user");
+    }
+  
+    if (myRole[0].id !== adminId[0].id) {
+      const role = await this.getAdminRole(req, res);
+      if (!role) {
+        return;
+      }
+    }
+
+    const result = await db.executeSQL('SELECT * FROM users');
     if (result.length === 0) {
-      res.status(200).send("No User");
+      res.status(400).send("No User");
     } else {
-      res.status(200).send(result);
+      res.status(200).json(result);
     }
   }
 
@@ -437,6 +475,63 @@ export class API {
     }
 
     const updateResult = await db.executeSQL('UPDATE users SET name = ?, password = ? WHERE id = ?', [name, hashedPassword, myId[0].id]);
+
+    if (updateResult.affectedRows === 0) {
+      res.status(400).send("Update failed");
+    } else {
+      res.status(200).send(`The user has been updated`);
+    }
+  }
+
+  private async updateUserByAdmin(req: Request, res: Response) {
+    if (!this.authentication(req, res)) {
+      return;
+    }
+
+    const id = req.params.id;
+    
+    const { oldPassword, name, password } = req.body;
+
+    const result = await db.executeSQL('SELECT password FROM users WHERE id = ?', [id]);
+    if (result.length === 0) {
+      res.status(400).send("User not found");
+      return false;
+    }
+
+    const storedPassword = result[0].password;
+
+    if (!password || !oldPassword) {
+      const updateResultWithoutPass = await db.executeSQL('UPDATE users SET name = ? WHERE id = ?', [name, id]);
+
+      if (updateResultWithoutPass.affectedRows === 0) {
+        res.status(400).send("Update failed");
+      } else {
+        res.status(200).send(`The user has been updated`);
+      }
+      return;
+    }
+
+    const hashedOldPassword = crypto.createHash('sha256').update(oldPassword).digest('hex');
+
+    if (hashedOldPassword !== storedPassword) {
+      res.status(400).send("Incorrect password");
+      return false;
+    }
+
+    const hashedPassword = crypto.createHash('sha256').update(password).digest('hex');
+
+    if (!name) {
+      const updateResultWithoutName = await db.executeSQL('UPDATE users SET password = ? WHERE id = ?', [hashedPassword, id]);
+
+      if (updateResultWithoutName.affectedRows === 0) {
+        res.status(400).send("Update failed");
+      } else {
+        res.status(200).send(`The user has been updated`);
+      }
+      return;
+    }
+
+    const updateResult = await db.executeSQL('UPDATE users SET name = ?, password = ? WHERE id = ?', [name, hashedPassword, id]);
 
     if (updateResult.affectedRows === 0) {
       res.status(400).send("Update failed");
