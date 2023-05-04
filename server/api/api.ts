@@ -236,10 +236,9 @@ export class API {
     const name = this.whoAmI(req, res);
     const user_id = await db.executeSQL(`SELECT id FROM users WHERE name = ?`, [name]);
     const { content } = req.body;
-    const feedback = 0;
 
     try {
-      await db.executeSQL(`INSERT INTO tweets (user_id, content, likes, dislike) VALUES (?, ?, ?, ?)`, [user_id[0].id, content, feedback, feedback]);
+      await db.executeSQL(`INSERT INTO tweets (user_id, content) VALUES (?, ?)`, [user_id[0].id, content]);
       res.send(`Thanks for your post.`);
     } catch (error) {
       console.log(error);
