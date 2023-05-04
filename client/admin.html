@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -7,6 +8,7 @@
     <link rel="stylesheet" href="/style.css" />
     <title>admin</title>
 </head>
+
 <body>
     <h1>Admin</h1>
     <nav>
@@ -14,6 +16,18 @@
         <a class="nav_profile" href="profile.html">Profile</a>
         <a class="nav_profile" id="logout" href="index.html">Logout</a>
         <a class="nav_profile" id="admin-nav"></a>
-      </nav>
+    </nav>
+
+    <table id="users_table">
+        <tr>
+            <th>Id</th>
+            <th>Name</th>
+            <th>Password</th>
+            <th>Role</th>
+        </tr>
+    </table>
+    
+    <script src="admin.js"></script>
 </body>
+
 </html>

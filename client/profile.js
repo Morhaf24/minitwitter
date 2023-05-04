@@ -147,18 +147,18 @@ function onPasswordResponse() {
         alert("Success");
         window.location.replace('http://localhost:4200')
       } else {
-        alert("Login failed");
+        alert("Old Password is incorrect");
       }
 }
 
 function onDeleteButtonPressed(event) {
     deleteRequest = new XMLHttpRequest();
     deleteRequest.open("Delete", "http://localhost:4200/tweet/" + event.currentTarget.getAttribute("delete-tweet-id"));
-    deleteRequest.onreadystatechange = onCategoryDeleteResponsed;
+    deleteRequest.onreadystatechange = onTweetDeleteResponsed;
     deleteRequest.send();
 }
 
-function onCategoryDeleteResponsed() {
+function onTweetDeleteResponsed() {
 if (deleteRequest.readyState < 4) {
     return;
 }
