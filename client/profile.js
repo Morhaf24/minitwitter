@@ -1,9 +1,10 @@
 const createPost = document.getElementById("create_post");
 const postInput = document.getElementById("post_input");
 const mainWindow = document.getElementById("mainWindow");
-const passwordForm = document.getElementById("edit_password");
-const passwordInput = document.getElementById("password_input");
-const usernameForm = document.getElementById("edit_username");
+const passwordButton = document.getElementById("password_save");
+const passwordInput = document.getElementById("new_password_input");
+const oldPasswordInput = document.getElementById("old_password_input");
+const usernameButton = document.getElementById("username_save");
 const usernameInput = document.getElementById("username_input");
 const logout = document.getElementById("logout");
 let logoutRequest;
@@ -91,9 +92,9 @@ function onListResponse() {
 }
 
 
-usernameForm.addEventListener("submit", onUsernameFormSubmitted);
+usernameButton.addEventListener("click", onUsernameButtonClicked);
 
-function onUsernameFormSubmitted(event) {
+function onUsernameButtonClicked(event) {
     event.preventDefault();
 
     const usernameData = {
@@ -120,9 +121,9 @@ function onUsernameResponse() {
       }
 }
 
-passwordForm.addEventListener("submit", onPasswordFormPressed);
+passwordButton.addEventListener("click", onPasswordButtonPressed);
 
-function onPasswordFormPressed(event) {
+function onPasswordButtonPressed(event) {
     event.preventDefault();
 
     const passwordData = {

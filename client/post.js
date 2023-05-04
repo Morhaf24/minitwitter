@@ -8,11 +8,11 @@ if (location.host.includes('localhost')) {
   )
 }
 
-let postForm = document.getElementById("create_post");
+let postForm = document.getElementById("new_post");
 const contentInput = document.getElementById("post_input");
 let postRequest;
 
-postForm.addEventListener("submit", onPostFormSubmitted);
+postForm.addEventListener("click", onPostFormSubmitted);
 
 function onPostFormSubmitted(event) {
   event.preventDefault();
