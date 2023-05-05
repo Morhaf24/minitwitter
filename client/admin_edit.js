@@ -1,7 +1,7 @@
 const usernameButton = document.getElementById("edit_user_admin");
 const usernameInput = document.getElementById("user_input");
-const roleButton = document.getElementById("edit_user_admin");
-const roleInput = document.getElementById("edit_role_admin");
+const roleButton = document.getElementById("edit_role_admin");
+const roleInput = document.getElementById("role_input");
 let usernameRequest;
 let roleRequest;
 
@@ -42,6 +42,8 @@ function onRoleButtonClicked(event) {
     const roleData = {
         role: roleInput.value
     };
+
+    console.log(roleData);
     
     roleRequest = new XMLHttpRequest();
     roleRequest.open("PUT", "http://localhost:4200/user/" + window.location.hash.substring(1));
@@ -56,7 +58,7 @@ function onRoleResponse() {
     }
       const responseStatus = roleRequest.status;
       if (responseStatus === 200) {
-        alert("Name has been changed");
+        alert("Role has been changed");
         window.location.replace('http://localhost:4200/admin.html');
       } else {
         alert("Try again");

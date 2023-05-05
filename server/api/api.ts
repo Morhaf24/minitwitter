@@ -451,14 +451,15 @@ export class API {
       return false;
     }
 
-    const existingUser = await db.executeSQL('SELECT name FROM users WHERE name = ?', [name]);
-    if (existingUser.length > 0) {
-      return res.status(400).send("Username already exists. Please choose a different username.");
-    }
-
     const storedPassword = result[0].password;
 
     if (!password || !oldPassword) {
+      const existingUser = await db.executeSQL('SELECT name FROM users WHERE name = ?', [name]);
+      if (existingUser.length > 0) {
+        res.status(400).send("Username already exists. Please choose a different username.");
+        return;
+      }
+
       const updateResultWithoutPass = await db.executeSQL('UPDATE users SET name = ? WHERE id = ?', [name, myId[0].id]);
 
       if (updateResultWithoutPass.affectedRows === 0) {
@@ -505,48 +506,46 @@ export class API {
 
     const id = req.params.id;
 
-    const { oldPassword, name, password } = req.body;
+    const { role, name } = req.body;
 
-    const result = await db.executeSQL('SELECT password FROM users WHERE id = ?', [id]);
-    if (result.length === 0) {
-      res.status(400).send("User not found");
-      return false;
-    }
-
-    const storedPassword = result[0].password;
-
-    if (!password || !oldPassword) {
+    if (!role) {
+      if (!name) {
+        res.status(400).send("Name is required");
+        return;
+      }
+    
+      const existingUser = await db.executeSQL('SELECT name FROM users WHERE name = ?', [name]);
+      if (existingUser.length > 0) {
+        res.status(400).send("Username already exists. Please choose a different username.");
+        return;
+      }
       const updateResultWithoutPass = await db.executeSQL('UPDATE users SET name = ? WHERE id = ?', [name, id]);
-
+    
       if (updateResultWithoutPass.affectedRows === 0) {
         res.status(400).send("Update failed");
       } else {
         res.status(200).send(`The user has been updated`);
       }
-      return;
-    }
-
-    const hashedOldPassword = crypto.createHash('sha256').update(oldPassword).digest('hex');
-
-    if (hashedOldPassword !== storedPassword) {
-      res.status(400).send("Incorrect password");
-      return false;
-    }
-
-    const hashedPassword = crypto.createHash('sha256').update(password).digest('hex');
+      return true;
+    }  
 
     if (!name) {
-      const updateResultWithoutName = await db.executeSQL('UPDATE users SET password = ? WHERE id = ?', [hashedPassword, id]);
+      if (!role) {
+        res.status(400).send("role is required");
+        return;
+      }
 
-      if (updateResultWithoutName.affectedRows === 0) {
+      const updateResultWithoutPass = await db.executeSQL('UPDATE users SET role = ? WHERE id = ?', [role, id]);
+    
+      if (updateResultWithoutPass.affectedRows === 0) {
         res.status(400).send("Update failed");
       } else {
         res.status(200).send(`The user has been updated`);
       }
-      return;
-    }
+      return true;
+    }    
 
-    const updateResult = await db.executeSQL('UPDATE users SET name = ?, password = ? WHERE id = ?', [name, hashedPassword, id]);
+    const updateResult = await db.executeSQL('UPDATE users SET name = ?, role = ? WHERE id = ?', [name, role, id]);
 
     if (updateResult.affectedRows === 0) {
       res.status(400).send("Update failed");
