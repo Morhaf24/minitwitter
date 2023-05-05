@@ -83,7 +83,7 @@ function onListResponse() {
                 let editCommentButton = document.createElement("button");
                 editCommentButton.innerText = "Edit";
                 editCommentButton.className = "editCommentButton"
-                editCommentButton.setAttribute("edit-comment-id", tweetsResponse[i].comment_id);
+                editCommentButton.setAttribute("edit-comment-id", tweetsResponse[i].comment);
                 editCommentButton.addEventListener("click", onEditCommentButtonPressed);
                 commentDiv.appendChild(editCommentButton);
     

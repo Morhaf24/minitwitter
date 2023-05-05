@@ -179,21 +179,36 @@ export class API {
     }
 
     const result = await db.executeSQL(`
-    SELECT tweets.id, tweets.content, users.name, users.role,
-    COUNT(DISTINCT likes.id) AS likes,
-    COUNT(DISTINCT dislikes.tweet_id) AS dislikes,
-    GROUP_CONCAT(CONCAT(' ', users_comment.name, ': ', comment.comment) ORDER BY comment.content SEPARATOR '\n') AS comments,
-    comment.id AS comment_id
-    FROM tweets
-    LEFT JOIN users ON tweets.user_id = users.id
-    LEFT JOIN likes ON tweets.id = likes.tweet_id AND likes.likes = 1
-    LEFT JOIN likes AS dislikes ON tweets.id = dislikes.tweet_id AND dislikes.likes = 0
-    LEFT JOIN comment ON tweets.id = comment.content
-    LEFT JOIN users AS users_comment ON comment.user_id = users_comment.id
-    GROUP BY tweets.id, comment.id
-    ORDER BY tweets.id DESC;    
+      SELECT tweets.id, tweets.content, users.name, users.role,
+      COALESCE(likes.likes, 0) AS likes,
+      COALESCE(dislikes.dislikes, 0) AS dislikes,
+      comments.comments,
+      comments.comment_id
+      FROM tweets
+      LEFT JOIN users ON tweets.user_id = users.id
+      LEFT JOIN (
+      SELECT tweet_id, COUNT(*) AS likes
+      FROM likes
+      WHERE likes = 1
+      GROUP BY tweet_id
+      ) AS likes ON tweets.id = likes.tweet_id
+      LEFT JOIN (
+      SELECT tweet_id, COUNT(*) AS dislikes
+      FROM likes
+      WHERE likes = 0
+      GROUP BY tweet_id
+      ) AS dislikes ON tweets.id = dislikes.tweet_id
+      LEFT JOIN (
+      SELECT comment.content, 
+        GROUP_CONCAT(CONCAT(' ', users_comment.name, ': ', comment.comment) ORDER BY comment.content SEPARATOR '\n') AS comments,
+        GROUP_CONCAT(comment.id ORDER BY comment.content SEPARATOR ',') AS comment_id
+        FROM comment 
+        LEFT JOIN users AS users_comment ON comment.user_id = users_comment.id
+        GROUP BY comment.content
+        ) AS comments ON tweets.id = comments.content
+        ORDER BY tweets.id DESC;
     `);
-    
+
     if (result.length === 0) {
       res.status(204).send("There are no tweets yet");
     } else {
@@ -205,10 +220,10 @@ export class API {
     if (!this.authentication(req, res)) {
       return false;
     }
-  
+
     const name = this.whoAmI(req, res);
     const myId = await db.executeSQL('SELECT id FROM users WHERE name = ?', [name]);
-  
+
     const result = await db.executeSQL(`
         SELECT tweets.id, tweets.content, users.name, users.role,
         COUNT(DISTINCT likes.id) AS likes,
@@ -232,13 +247,13 @@ export class API {
         GROUP BY tweets.id
         ORDER BY tweets.id DESC;  
     `, [myId[0].id, myId[0].id, myId[0].id, myId[0].id]);
-  
+
     if (result.length === 0) {
       res.status(204).send("There are no tweets yet");
     } else {
       res.status(200).send(result);
     }
-  }  
+  }
 
   private async postTweet(req: Request, res: Response) {
     if (!this.authentication(req, res)) {
@@ -513,21 +528,21 @@ export class API {
         res.status(400).send("Name is required");
         return;
       }
-    
+
       const existingUser = await db.executeSQL('SELECT name FROM users WHERE name = ?', [name]);
       if (existingUser.length > 0) {
         res.status(400).send("Username already exists. Please choose a different username.");
         return;
       }
       const updateResultWithoutPass = await db.executeSQL('UPDATE users SET name = ? WHERE id = ?', [name, id]);
-    
+
       if (updateResultWithoutPass.affectedRows === 0) {
         res.status(400).send("Update failed");
       } else {
         res.status(200).send(`The user has been updated`);
       }
       return true;
-    }  
+    }
 
     if (!name) {
       if (!role) {
@@ -536,14 +551,14 @@ export class API {
       }
 
       const updateResultWithoutPass = await db.executeSQL('UPDATE users SET role = ? WHERE id = ?', [role, id]);
-    
+
       if (updateResultWithoutPass.affectedRows === 0) {
         res.status(400).send("Update failed");
       } else {
         res.status(200).send(`The user has been updated`);
       }
       return true;
-    }    
+    }
 
     const updateResult = await db.executeSQL('UPDATE users SET name = ?, role = ? WHERE id = ?', [name, role, id]);
 
@@ -579,7 +594,7 @@ export class API {
     const user_id = getUserId[0].id;
 
     const check = await db.executeSQL('SELECT id, likes FROM likes WHERE tweet_id = ? AND user_id = ?', [tweet_id, user_id]);
-    
+
     if (check.length === 0) {
       const likes = 1;
       const newLike = await db.executeSQL(`INSERT INTO likes (tweet_id, likes, dislike, user_id) VALUES (?, ?, ?, ?)`, [tweet_id, likes, 0, user_id]);
@@ -590,7 +605,7 @@ export class API {
     } else {
       const like_id = check[0].id;
       const like_count = check[0].likes;
-      
+
       if (like_count === 1) {
         const result = await db.executeSQL('DELETE FROM likes WHERE id = ?', [like_id]);
         if (result) {
@@ -612,12 +627,12 @@ export class API {
     if (!this.authentication(req, res)) {
       return;
     }
-  
+
     const name = this.whoAmI(req, res);
     const tweet_id = req.params.tweet_id;
     const getUserId = await db.executeSQL('SELECT id FROM users WHERE name = ?', [name]);
     const user_id = getUserId[0].id;
-  
+
     const check = await db.executeSQL('SELECT id, dislike FROM likes WHERE tweet_id = ? AND user_id = ?', [tweet_id, user_id]);
 
     if (check.length === 0) {
@@ -646,5 +661,5 @@ export class API {
       }
     }
     res.status(400).send('Try again');
-  }  
+  }
 }
