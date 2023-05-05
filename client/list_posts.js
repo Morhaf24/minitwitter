@@ -56,7 +56,6 @@ function onListResponse() {
             likeDiv.appendChild(dislikeDiv);
             likeDiv.appendChild(disLikeButton);
 
-            let commentDiv = document.createElement("div");
             let commentInput = document.createElement("input");
             let commentButton = document.createElement("button");
             let commentLabel = document.createElement("label");
@@ -64,14 +63,20 @@ function onListResponse() {
             commentButton.innerHTML = "comment"
             commentInput.className = "commentInput";
             commentInput.placeholder = "Comment";
-            commentDiv.innerHTML = tweetsResponse[i].comments || "no comments";
-            commentDiv.className = "commentDiv";
             commentInput.setAttribute("input", commentInput)
-            commentButton.setAttribute("comment-content-id", tweetsResponse[i].id);
             commentButton.addEventListener("click", onCommentButtonPressed);
-            tweetsDiv.appendChild(commentInput);
-            tweetsDiv.appendChild(commentButton)
-            tweetsDiv.appendChild(commentDiv);
+            
+            for (let i = 0; i < tweetsResponse.length; i++) {
+              let commentDiv = document.createElement("div");
+              commentDiv.innerHTML = tweetsResponse[i].comments || "no comments";
+              commentDiv.className = "commentDiv";
+              commentButton.setAttribute("comment-content-id", tweetsResponse[i].id);
+              
+              tweetsDiv.appendChild(commentInput);
+              tweetsDiv.appendChild(commentButton)
+              tweetsDiv.appendChild(commentDiv);
+            }
+                       
 
             let deleteAndEditCell = document.createElement("div");
             tweetsDiv.appendChild(deleteAndEditCell);

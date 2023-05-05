@@ -39,8 +39,6 @@ export class API {
     this.app.delete('/user/:id', this.deleteUser.bind(this));
     this.app.put('/like/:tweet_id', this.likeTweet.bind(this));
     this.app.put('/dislike/:tweet_id', this.dislikeTweet.bind(this));
-    this.app.put('/deleteLike/:id', this.deleteLike.bind(this));
-    this.app.put('/deleteDisike/:id', this.deleteDisike.bind(this));
     this.app.get('/whoAmI', this.whoAmI.bind(this));
     this.app.get('/role', this.getRole.bind(this));
   }
@@ -137,21 +135,21 @@ export class API {
     try {
       const decodedToken = jwt.verify(token, TOKEN_SECRET) as { username: string };
       const username = decodedToken.username;
-  
+
       const result = await db.executeSQL('SELECT role FROM users WHERE name = ?', [username]);
-  
+
       let role = result[0].role;
       if (role === "A" || role === "M") {
         return true;
       }
-  
+
       res.status(403).send(role);
       return false;
     } catch (error) {
       res.status(401).send('Unauthorized');
     }
   }
-  
+
   public async getAdminRole(req: Request, res: Response) {
     const token = req.cookies.jwt;
     if (!this.authentication(req, res)) {
@@ -160,14 +158,14 @@ export class API {
     try {
       const decodedToken = jwt.verify(token, TOKEN_SECRET) as { username: string };
       const username = decodedToken.username;
-  
+
       const result = await db.executeSQL('SELECT role FROM users WHERE name = ?', [username]);
-  
+
       let role = result[0].role;
       if (role === "A") {
         return true;
       }
-  
+
       res.status(403).send(role);
       return false;
     } catch (error) {
@@ -179,19 +177,22 @@ export class API {
     if (!this.authentication(req, res)) {
       return;
     }
+
     const result = await db.executeSQL(`
-      SELECT tweets.id, tweets.content, users.name, 
-      (SELECT likes FROM likes WHERE likes.tweet_id = tweets.id) AS likes, 
-      (SELECT dislike FROM likes WHERE likes.tweet_id = tweets.id) AS dislike,
-      GROUP_CONCAT(CONCAT(' ', users_comment.name, ': ', comment.comment)) AS comments
+      SELECT tweets.id, tweets.content, users.name,
+      COUNT(DISTINCT likes.id) AS likes,
+      COUNT(DISTINCT dislike.id) AS dislikes,
+      GROUP_CONCAT(CONCAT(' ', users_comment.name, ': ', comment.comment) ORDER BY comment.id SEPARATOR '\n') AS comments
       FROM tweets
       LEFT JOIN users ON tweets.user_id = users.id
+      LEFT JOIN likes ON tweets.id = likes.tweet_id AND likes.likes = 1
+      LEFT JOIN likes AS dislike ON tweets.id = dislike.tweet_id AND dislike.dislike = 1
       LEFT JOIN comment ON tweets.id = comment.content
       LEFT JOIN users AS users_comment ON comment.user_id = users_comment.id
       GROUP BY tweets.id
       ORDER BY tweets.id DESC;
-  `);  
-
+    `);
+    
     if (result.length === 0) {
       res.status(204).send("There are no tweets yet");
     } else {
@@ -204,20 +205,23 @@ export class API {
       return false;
     }
     const name = this.whoAmI(req, res);
-    
+
     const myId = await db.executeSQL('SELECT id FROM users WHERE name = ?', [name]);
-    
+
 
     const result = await db.executeSQL(`
-      SELECT tweets.id, tweets.content, users.name, 
-      (SELECT likes FROM likes WHERE likes.tweet_id = tweets.id) AS likes, 
-      (SELECT dislike FROM likes WHERE likes.tweet_id = tweets.id) AS dislike,
-      GROUP_CONCAT(CONCAT(' ', users_comment.name, ': ', comment.comment)) AS comments
+      SELECT tweets.id, tweets.content, users.name,
+      COUNT(DISTINCT likes.id) AS likes,
+      COUNT(DISTINCT dislike.id) AS dislike,
+      (SELECT GROUP_CONCAT(CONCAT(' ', users_comment.name, ': ', comment.comment))
+      FROM comment
+      LEFT JOIN users AS users_comment ON comment.user_id = users_comment.id
+      WHERE comment.content = tweets.id) AS comments
       FROM tweets
       LEFT JOIN users ON tweets.user_id = users.id
-      LEFT JOIN comment ON tweets.id = comment.content
-      LEFT JOIN users AS users_comment ON comment.user_id = users_comment.id
-      WHERE users.id = ?
+      LEFT JOIN likes ON tweets.id = likes.tweet_id
+      LEFT JOIN likes AS dislike ON tweets.id = dislike.tweet_id AND dislike.dislike = 1
+      WHERE tweets.user_id = ?
       GROUP BY tweets.id
       ORDER BY tweets.id DESC;
     `, [myId[0].id]);
@@ -252,30 +256,30 @@ export class API {
     }
     const id = req.params.id;
     const { content } = req.body;
-  
+
     const name = this.whoAmI(req, res);
     const myRole = await db.executeSQL(`SELECT id FROM users WHERE name = ?`, [name]);
     const tweetId = await db.executeSQL(`SELECT user_id FROM tweets WHERE id = ?`, [id]);
-  
+
     if (myRole.length === 0 || tweetId.length === 0) {
       return res.status(400).send("Invalid tweet ID or user");
     }
-  
+
     if (myRole[0].id !== tweetId[0].user_id) {
       const role = await this.getRole(req, res);
       if (!role) {
         return;
       }
     }
-  
+
     const result = await db.executeSQL('UPDATE tweets SET `content`= ? WHERE id = ?', [content, id]);
-  
+
     if (result.affectedRows === 0) {
       return res.status(400).send("There are no tweets to update");
     }
-  
+
     return res.status(200).send(`The Tweet has been updated`);
-  }  
+  }
 
   private async deleteTweet(req: Request, res: Response) {
     if (!this.authentication(req, res)) {
@@ -286,11 +290,11 @@ export class API {
     const name = this.whoAmI(req, res);
     const myRole = await db.executeSQL(`SELECT id FROM users WHERE name = ?`, [name]);
     const tweetId = await db.executeSQL(`SELECT user_id FROM tweets WHERE id = ?`, [id]);
-  
+
     if (myRole.length === 0 || tweetId.length === 0) {
       return res.status(400).send("Invalid tweet ID or user");
     }
-  
+
     if (myRole[0].id !== tweetId[0].user_id) {
       const role = await this.getRole(req, res);
       if (!role) {
@@ -345,11 +349,11 @@ export class API {
     const name = this.whoAmI(req, res);
     const myRole = await db.executeSQL(`SELECT id FROM users WHERE name = ?`, [name]);
     const commentId = await db.executeSQL(`SELECT user_id FROM comment WHERE id = ?`, [id]);
-  
+
     if (myRole.length === 0 || commentId.length === 0) {
       return res.status(400).send("Invalid tweet ID or user");
     }
-  
+
     if (myRole[0].id !== commentId[0].user_id) {
       const role = await this.getRole(req, res);
       if (!role) {
@@ -375,11 +379,11 @@ export class API {
     const name = this.whoAmI(req, res);
     const myRole = await db.executeSQL(`SELECT id FROM users WHERE name = ?`, [name]);
     const commentId = await db.executeSQL(`SELECT user_id FROM comment WHERE id = ?`, [id]);
-  
+
     if (myRole.length === 0 || commentId.length === 0) {
       return res.status(400).send("Invalid tweet ID or user");
     }
-  
+
     if (myRole[0].id !== commentId[0].user_id) {
       const role = await this.getRole(req, res);
       if (!role) {
@@ -403,11 +407,11 @@ export class API {
     const name = this.whoAmI(req, res);
     const myRole = await db.executeSQL(`SELECT id FROM users WHERE name = ?`, [name]);
     const adminId = await db.executeSQL(`SELECT id FROM users WHERE id = ?`, [1]);
-  
+
     if (myRole.length === 0 || adminId.length === 0) {
       return res.status(400).send("Invalid tweet ID or user");
     }
-  
+
     if (myRole[0].id !== adminId[0].id) {
       const role = await this.getAdminRole(req, res);
       if (!role) {
@@ -429,7 +433,7 @@ export class API {
     }
 
     const authName = this.whoAmI(req, res);
-    
+
     const myId = await db.executeSQL('SELECT id FROM users WHERE name = ?', [authName]);
 
     const { oldPassword, name, password } = req.body;
@@ -488,7 +492,7 @@ export class API {
     }
 
     const id = req.params.id;
-    
+
     const { oldPassword, name, password } = req.body;
 
     const result = await db.executeSQL('SELECT password FROM users WHERE id = ?', [id]);
@@ -557,29 +561,38 @@ export class API {
     if (!this.authentication(req, res)) {
       return;
     }
-  
+
+    const name = this.whoAmI(req, res);
     const tweet_id = req.params.tweet_id;
-  
-    let check = await db.executeSQL('SELECT id FROM likes WHERE tweet_id = ?', [tweet_id]);
-    const likes = 1;
-  
+    const getUserId = await db.executeSQL('SELECT id FROM users WHERE name = ?', [name]);
+    const user_id = getUserId[0].id;
+
+    const check = await db.executeSQL('SELECT id, likes FROM likes WHERE tweet_id = ? AND user_id = ?', [tweet_id, user_id]);
+    
     if (check.length === 0) {
-      const newLike = await db.executeSQL(`INSERT INTO likes (tweet_id, likes, dislike) VALUES (?, ?, ?)`, [tweet_id, likes, 0]);
+      const likes = 1;
+      const newLike = await db.executeSQL(`INSERT INTO likes (tweet_id, likes, dislike, user_id) VALUES (?, ?, ?, ?)`, [tweet_id, likes, 0, user_id]);
       if (newLike) {
         res.status(200).send('New like has been created');
         return true;
       }
-    }
-  
-    const likeCount = await db.executeSQL('SELECT likes, dislike FROM likes WHERE id = ?', [check[0].id]);
-    const dislike = likeCount[0].dislike;
-    const insertLike = likeCount[0].likes + likes;
-  
-    const result = await db.executeSQL('UPDATE likes SET likes = ?, dislike = ? WHERE tweet_id = ?', [insertLike, dislike, tweet_id]);
-  
-    if (result) {
-      res.status(200).send('Tweet liked successfully');
-      return true;
+    } else {
+      const like_id = check[0].id;
+      const like_count = check[0].likes;
+      
+      if (like_count === 1) {
+        const result = await db.executeSQL('DELETE FROM likes WHERE id = ?', [like_id]);
+        if (result) {
+          res.status(200).send('Tweet like removed successfully');
+          return true;
+        }
+      } else {
+        const result = await db.executeSQL('UPDATE likes SET likes = ? WHERE id = ?', [like_count - 1, like_id]);
+        if (result) {
+          res.status(200).send('Tweet like removed successfully');
+          return true;
+        }
+      }
     }
     res.status(400).send('Try again');
   }
@@ -589,63 +602,38 @@ export class API {
       return;
     }
   
+    const name = this.whoAmI(req, res);
     const tweet_id = req.params.tweet_id;
+    const getUserId = await db.executeSQL('SELECT id FROM users WHERE name = ?', [name]);
+    const user_id = getUserId[0].id;
   
-    let check = await db.executeSQL('SELECT id FROM likes WHERE tweet_id = ?', [tweet_id]);
-    const dislike = 1;
-  
+    const check = await db.executeSQL('SELECT id, dislike FROM likes WHERE tweet_id = ? AND user_id = ?', [tweet_id, user_id]);
+
     if (check.length === 0) {
-      const newLike = await db.executeSQL(`INSERT INTO likes (tweet_id, likes, dislike) VALUES (?, ?, ?)`, [tweet_id, 0, dislike]);
-      if (newLike) {
-        res.status(200).send('New like has been created');
+      const dislikes = 1;
+      const newDislike = await db.executeSQL(`INSERT INTO likes (tweet_id, likes, dislike, user_id) VALUES (?, ?, ?, ?)`, [tweet_id, 0, dislikes, user_id]);
+      if (newDislike) {
+        res.status(200).send('New dislike has been created');
         return true;
       }
-    }
-  
-    const dislikeCount = await db.executeSQL('SELECT likes, dislike FROM likes WHERE id = ?', [check[0].id]);
-    const like = dislikeCount[0].likes;
-    const insertDislike = dislikeCount[0].dislike + dislike;
-  
-    const result = await db.executeSQL('UPDATE likes SET likes = ?, dislike = ? WHERE tweet_id = ?', [like, insertDislike, tweet_id]);
-  
-    if (result) {
-      res.status(200).send('Tweet disliked successfully');
-      return true;
+    } else {
+      const dislike_id = check[0].id;
+      const dislike_count = check[0].dislike;
+
+      if (dislike_count === 1) {
+        const result = await db.executeSQL('DELETE FROM likes WHERE id = ?', [dislike_id]);
+        if (result) {
+          res.status(200).send('Tweet dislike removed successfully');
+          return true;
+        }
+      } else {
+        const result = await db.executeSQL('UPDATE likes SET dislike = ? WHERE id = ?', [dislike_count - 1, dislike_id]);
+        if (result) {
+          res.status(200).send('Tweet has been disliked');
+          return true;
+        }
+      }
     }
     res.status(400).send('Try again');
   }  
-
-  private async deleteLike(req: Request, res: Response) {
-    if (!this.authentication(req, res)) {
-      return;
-    }
-    const id = req.params.id;
-    const { tweet_id } = req.body;
-    const like = 1;
-
-    const likeCount = await db.executeSQL('SELECT likes, dislike FROM likes WHERE id = ?', [id]);
-    const dislike = likeCount[0].dislike;
-
-    const insertLike = likeCount[0].likes - like;
-
-    await db.executeSQL('UPDATE likes SET tweet_id = ?, likes = ?, dislike = ? WHERE id = ?', [tweet_id, insertLike, dislike, id]);
-    res.send('remove like successfully');
-  }
-
-  private async deleteDisike(req: Request, res: Response) {
-    if (!this.authentication(req, res)) {
-      return;
-    }
-    const id = req.params.id;
-    const { tweet_id } = req.body;
-    const dislike = 1;
-
-    const dislikeCount = await db.executeSQL('SELECT likes, dislike FROM likes WHERE id = ?', [id]);
-    const like = dislikeCount[0].likes;
-
-    const insertDislike = dislikeCount[0].dislike - dislike;
-
-    await db.executeSQL('UPDATE likes SET tweet_id = ?, likes = ?, dislike = ? WHERE id = ?', [tweet_id, like, insertDislike, id]);
-    res.send('remove disliked successfully');
-  }
 }

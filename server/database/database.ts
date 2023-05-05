@@ -13,6 +13,7 @@ export class Database {
       user: process.env.DB_USER || 'minitwitter',
       password: process.env.DB_PASSWORD || 'supersecret123',
       connectionLimit: 5,
+      bigIntAsNumber: true
     })
     this.initializeDBSchema()
   }
