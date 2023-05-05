@@ -56,6 +56,18 @@ function onListResponse() {
             likeDiv.appendChild(dislikeDiv);
             likeDiv.appendChild(disLikeButton);
 
+            let commentDiv = document.createElement("div");
+            commentDiv.innerHTML = "Comments:";
+            commentDiv.className = "commentDiv";
+            tweetsDiv.appendChild(commentDiv);
+            let comments = tweetsResponse[i].comments || "";
+            let commentLines = comments.split("\n");
+            for (let j = 0; j < commentLines.length; j++) {
+                let comment = document.createElement("div");
+                comment.innerText = commentLines[j];
+                commentDiv.appendChild(comment);
+            }
+
             let commentInput = document.createElement("input");
             let commentButton = document.createElement("button");
             let commentLabel = document.createElement("label");
@@ -64,19 +76,10 @@ function onListResponse() {
             commentInput.className = "commentInput";
             commentInput.placeholder = "Comment";
             commentInput.setAttribute("input", commentInput)
+            commentButton.setAttribute("comment-content-id", tweetsResponse[i].id);
             commentButton.addEventListener("click", onCommentButtonPressed);
-            
-            for (let i = 0; i < tweetsResponse.length; i++) {
-              let commentDiv = document.createElement("div");
-              commentDiv.innerHTML = tweetsResponse[i].comments || "no comments";
-              commentDiv.className = "commentDiv";
-              commentButton.setAttribute("comment-content-id", tweetsResponse[i].id);
-              
-              tweetsDiv.appendChild(commentInput);
-              tweetsDiv.appendChild(commentButton)
-              tweetsDiv.appendChild(commentDiv);
-            }
-                       
+            tweetsDiv.appendChild(commentInput);
+            tweetsDiv.appendChild(commentButton);
 
             let deleteAndEditCell = document.createElement("div");
             tweetsDiv.appendChild(deleteAndEditCell);

@@ -58,7 +58,7 @@ function onListResponse() {
             const profileName = document.getElementById("profile_name");
             profileName.innerHTML = "Welcome " + tweetsResponse[i].name + " ^_^";
             profileName.className = "profileName";
-            if (tweetsResponse[i].name === "admin") {
+            if (tweetsResponse[i].role === "A") {
                 const adminNav = document.getElementById("admin-nav");
                 adminNav.innerHTML = "admin";
                 adminNav.addEventListener("click", onAdminNavClicked)
@@ -116,9 +116,10 @@ function onUsernameResponse() {
       if (responseStatus === 200) {
         alert("Success");
         window.location.replace('http://localhost:4200')
-      } else {
-        alert("Login failed");
-      }
+      }     
+      else if (responseStatus === 400) {
+        alert("This Name exists")
+    }
 }
 
 passwordButton.addEventListener("click", onPasswordButtonPressed);

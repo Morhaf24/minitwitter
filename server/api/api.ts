@@ -179,7 +179,7 @@ export class API {
     }
 
     const result = await db.executeSQL(`
-      SELECT tweets.id, tweets.content, users.name,
+      SELECT tweets.id, tweets.content, users.name, users.role,
       COUNT(DISTINCT likes.id) AS likes,
       COUNT(DISTINCT dislikes.tweet_id) AS dislikes,
       GROUP_CONCAT(CONCAT(' ', users_comment.name, ': ', comment.comment) ORDER BY comment.content SEPARATOR '\n') AS comments
@@ -210,17 +210,16 @@ export class API {
 
 
     const result = await db.executeSQL(`
-      SELECT tweets.id, tweets.content, users.name,
+      SELECT tweets.id, tweets.content, users.name, users.role,
       COUNT(DISTINCT likes.id) AS likes,
-      COUNT(DISTINCT dislike.id) AS dislike,
-      (SELECT GROUP_CONCAT(CONCAT(' ', users_comment.name, ': ', comment.comment))
-      FROM comment
-      LEFT JOIN users AS users_comment ON comment.user_id = users_comment.id
-      WHERE comment.content = tweets.id) AS comments
+      COUNT(DISTINCT dislikes.tweet_id) AS dislikes,
+      GROUP_CONCAT(CONCAT(' ', users_comment.name, ': ', comment.comment) ORDER BY comment.content SEPARATOR '\n') AS comments
       FROM tweets
       LEFT JOIN users ON tweets.user_id = users.id
-      LEFT JOIN likes ON tweets.id = likes.tweet_id
-      LEFT JOIN likes AS dislike ON tweets.id = dislike.tweet_id AND dislike.dislike = 1
+      LEFT JOIN likes ON tweets.id = likes.tweet_id AND likes.likes = 1
+      LEFT JOIN likes AS dislikes ON tweets.id = dislikes.tweet_id AND dislikes.likes = 0
+      LEFT JOIN comment ON tweets.id = comment.content
+      LEFT JOIN users AS users_comment ON comment.user_id = users_comment.id
       WHERE tweets.user_id = ?
       GROUP BY tweets.id
       ORDER BY tweets.id DESC;
@@ -442,6 +441,11 @@ export class API {
     if (result.length === 0) {
       res.status(400).send("User not found");
       return false;
+    }
+
+    const existingUser = await db.executeSQL('SELECT name FROM users WHERE name = ?', [name]);
+    if (existingUser.length > 0) {
+      return res.status(400).send("Username already exists. Please choose a different username.");
     }
 
     const storedPassword = result[0].password;
