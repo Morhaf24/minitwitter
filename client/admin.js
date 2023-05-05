@@ -28,6 +28,7 @@ function onRegisterResponse() {
     const responseStatus = creatUserRequest.status;
     if (responseStatus === 200) {
       alert("Success");
+      window.location.reload();
     } else {
       alert("Regestry failed");
     }
