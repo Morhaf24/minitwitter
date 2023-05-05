@@ -76,14 +76,14 @@ function onListResponse() {
                 let deleteCommentButton = document.createElement("button");
                 deleteCommentButton.innerText = "Delete";
                 deleteCommentButton.className = "deleteCommentButton";
-                deleteCommentButton.setAttribute("delete-comment-id", tweetsResponse[i].id);
+                deleteCommentButton.setAttribute("delete-comment-id", tweetsResponse[i].comment_id);
                 deleteCommentButton.addEventListener("click", onDeleteCommentButtonPressed);
                 commentDiv.appendChild(deleteCommentButton);
     
                 let editCommentButton = document.createElement("button");
                 editCommentButton.innerText = "Edit";
                 editCommentButton.className = "editCommentButton"
-                editCommentButton.setAttribute("edit-comment-id", tweetsResponse[i].id);
+                editCommentButton.setAttribute("edit-comment-id", tweetsResponse[i].comment_id);
                 editCommentButton.addEventListener("click", onEditCommentButtonPressed);
                 commentDiv.appendChild(editCommentButton);
     

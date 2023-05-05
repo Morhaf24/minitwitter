@@ -8,7 +8,7 @@ function onEditCommentButtonPressed(event) {
     event.preventDefault();
 
     let commentData = {
-        content: postInput.value
+        comment: postInput.value
     };
 
     editCommentRequest = new XMLHttpRequest();

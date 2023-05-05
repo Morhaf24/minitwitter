@@ -179,18 +179,19 @@ export class API {
     }
 
     const result = await db.executeSQL(`
-      SELECT tweets.id, tweets.content, users.name, users.role,
-      COUNT(DISTINCT likes.id) AS likes,
-      COUNT(DISTINCT dislikes.tweet_id) AS dislikes,
-      GROUP_CONCAT(CONCAT(' ', users_comment.name, ': ', comment.comment) ORDER BY comment.content SEPARATOR '\n') AS comments
-      FROM tweets
-      LEFT JOIN users ON tweets.user_id = users.id
-      LEFT JOIN likes ON tweets.id = likes.tweet_id AND likes.likes = 1
-      LEFT JOIN likes AS dislikes ON tweets.id = dislikes.tweet_id AND dislikes.likes = 0
-      LEFT JOIN comment ON tweets.id = comment.content
-      LEFT JOIN users AS users_comment ON comment.user_id = users_comment.id
-      GROUP BY tweets.id
-      ORDER BY tweets.id DESC;
+    SELECT tweets.id, tweets.content, users.name, users.role,
+    COUNT(DISTINCT likes.id) AS likes,
+    COUNT(DISTINCT dislikes.tweet_id) AS dislikes,
+    GROUP_CONCAT(CONCAT(' ', users_comment.name, ': ', comment.comment) ORDER BY comment.content SEPARATOR '\n') AS comments,
+    comment.id AS comment_id
+    FROM tweets
+    LEFT JOIN users ON tweets.user_id = users.id
+    LEFT JOIN likes ON tweets.id = likes.tweet_id AND likes.likes = 1
+    LEFT JOIN likes AS dislikes ON tweets.id = dislikes.tweet_id AND dislikes.likes = 0
+    LEFT JOIN comment ON tweets.id = comment.content
+    LEFT JOIN users AS users_comment ON comment.user_id = users_comment.id
+    GROUP BY tweets.id, comment.id
+    ORDER BY tweets.id DESC;    
     `);
     
     if (result.length === 0) {
@@ -204,33 +205,40 @@ export class API {
     if (!this.authentication(req, res)) {
       return false;
     }
+  
     const name = this.whoAmI(req, res);
-
     const myId = await db.executeSQL('SELECT id FROM users WHERE name = ?', [name]);
-
-
+  
     const result = await db.executeSQL(`
-      SELECT tweets.id, tweets.content, users.name, users.role,
-      COUNT(DISTINCT likes.id) AS likes,
-      COUNT(DISTINCT dislikes.tweet_id) AS dislikes,
-      GROUP_CONCAT(CONCAT(' ', users_comment.name, ': ', comment.comment) ORDER BY comment.content SEPARATOR '\n') AS comments
-      FROM tweets
-      LEFT JOIN users ON tweets.user_id = users.id
-      LEFT JOIN likes ON tweets.id = likes.tweet_id AND likes.likes = 1
-      LEFT JOIN likes AS dislikes ON tweets.id = dislikes.tweet_id AND dislikes.likes = 0
-      LEFT JOIN comment ON tweets.id = comment.content
-      LEFT JOIN users AS users_comment ON comment.user_id = users_comment.id
-      WHERE tweets.user_id = ?
-      GROUP BY tweets.id
-      ORDER BY tweets.id DESC;
-    `, [myId[0].id]);
-
+        SELECT tweets.id, tweets.content, users.name, users.role,
+        COUNT(DISTINCT likes.id) AS likes,
+        COUNT(DISTINCT dislikes.tweet_id) AS dislikes,
+        GROUP_CONCAT(CONCAT(' ', users_comment.name, ': ', comment.comment) ORDER BY comment.content SEPARATOR '\n') AS comments
+        FROM tweets
+        LEFT JOIN users ON tweets.user_id = users.id
+        LEFT JOIN likes ON tweets.id = likes.tweet_id AND likes.likes = 1
+        LEFT JOIN likes AS dislikes ON tweets.id = dislikes.tweet_id AND dislikes.likes = 0
+        LEFT JOIN (
+          SELECT id, content, user_id, comment
+          FROM comment
+          WHERE user_id = ?
+          UNION
+          SELECT id, content, user_id, comment
+          FROM comment
+          WHERE user_id != ?
+        ) AS comment ON tweets.id = comment.content
+        LEFT JOIN users AS users_comment ON comment.user_id = users_comment.id
+        WHERE tweets.user_id = ? OR comment.user_id = ?
+        GROUP BY tweets.id
+        ORDER BY tweets.id DESC;  
+    `, [myId[0].id, myId[0].id, myId[0].id, myId[0].id]);
+  
     if (result.length === 0) {
       res.status(204).send("There are no tweets yet");
     } else {
       res.status(200).send(result);
     }
-  }
+  }  
 
   private async postTweet(req: Request, res: Response) {
     if (!this.authentication(req, res)) {
