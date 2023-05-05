@@ -181,12 +181,12 @@ export class API {
     const result = await db.executeSQL(`
       SELECT tweets.id, tweets.content, users.name,
       COUNT(DISTINCT likes.id) AS likes,
-      COUNT(DISTINCT dislike.id) AS dislikes,
-      GROUP_CONCAT(CONCAT(' ', users_comment.name, ': ', comment.comment) ORDER BY comment.id SEPARATOR '\n') AS comments
+      COUNT(DISTINCT dislikes.tweet_id) AS dislikes,
+      GROUP_CONCAT(CONCAT(' ', users_comment.name, ': ', comment.comment) ORDER BY comment.content SEPARATOR '\n') AS comments
       FROM tweets
       LEFT JOIN users ON tweets.user_id = users.id
       LEFT JOIN likes ON tweets.id = likes.tweet_id AND likes.likes = 1
-      LEFT JOIN likes AS dislike ON tweets.id = dislike.tweet_id AND dislike.dislike = 1
+      LEFT JOIN likes AS dislikes ON tweets.id = dislikes.tweet_id AND dislikes.likes = 0
       LEFT JOIN comment ON tweets.id = comment.content
       LEFT JOIN users AS users_comment ON comment.user_id = users_comment.id
       GROUP BY tweets.id

@@ -51,7 +51,7 @@ function onListResponse() {
             disLikeButton.innerHTML = "dislike";
             disLikeButton.setAttribute("like-id", tweetsResponse[i].id);
             disLikeButton.addEventListener("click", onDislikeButtonPressed);
-            dislikeDiv.innerHTML = tweetsResponse[i].dislike || "0";;
+            dislikeDiv.innerHTML = tweetsResponse[i].dislikes || "0";;
             dislikeDiv.className = "dislikesDiv";
             likeDiv.appendChild(dislikeDiv);
             likeDiv.appendChild(disLikeButton);
