@@ -165,7 +165,6 @@ div.dislikesDiv {
   font-size: large;
   display: inline-block;
   margin-left: 50px;
-
 }
 
 div.commentDiv {
@@ -330,4 +329,115 @@ button.save_password:hover {
 
 .profileName {
   color: white;
+}
+
+input.username_admin {
+  width: 300px;
+  height: 30px;
+  border: none;
+  border-radius: 20px;
+  padding-left: 8px;
+}
+
+input.password_admin {
+  width: 300px;
+  height: 30px;
+  border: none;
+  border-radius: 20px;
+  padding-left: 8px;
+}
+
+input.role_admin {
+  width: 300px;
+  height: 30px;
+  border: none;
+  border-radius: 20px;
+  padding-left: 8px;
+  margin-left: 45px;
+}
+
+form.creat-user-form{
+  width: 500px;
+  overflow: hidden;
+  margin: auto;
+  margin-block-start: 25px;
+  padding-top: 30px;
+}
+
+button.create_post {
+  background-color: white;
+  width: 100px;
+  height: 30px;
+  border: none;
+  border-radius: 17px;
+  padding-left: 4px;
+  color: rgb(0, 0, 0);
+  margin: auto;
+  margin-left: 200px;
+  font-size: large;
+}
+
+div button.create_post:hover {
+  background-color: black;
+  font-size: larger;
+  color: white;
+}
+
+button.deleteButton_admin {
+  height: 30px;
+  width: 100px;
+  border: none;
+  border-radius: 17px;
+  background-color: red;
+  color: white;
+  margin: auto;
+  font-size: large;
+  margin-left: 15px;
+}
+
+button.deleteButton_admin:hover {
+  background-color: rgb(120, 0, 0);
+  color: white;
+  font-size: larger;
+}
+
+button.editButton_admin {
+  height: 30px;
+  width: 100px;
+  border: none;
+  border-radius: 17px;
+  color: black;
+  margin: auto;
+  margin-left: 15px;
+  font-size: large;
+  margin-top: 5px;
+}
+
+button.editButton_admin:hover {
+  background-color: black;
+  color: white;
+  font-size: larger;
+}
+
+table.users_table {
+  margin-top: 50px;
+  color: white;
+  border: 2.5px solid rgb(19, 19, 19);
+}
+
+th {
+  font-weight: 800;
+  color: black;
+  border: 2.5px solid rgb(19, 19, 19);
+}
+
+tr {
+  border: 3px solid rgb(46, 46, 46);
+  border-collapse: collapse;
+
+}
+
+table.td {
+  margin-left: 5%;
+  border: 1px solid #afafaf;
 }

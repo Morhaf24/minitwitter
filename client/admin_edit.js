@@ -34,7 +34,6 @@ function onUsernameResponse() {
       }
 }
 
-
 roleButton.addEventListener("click", onRoleButtonClicked);
 
 function onRoleButtonClicked(event) {

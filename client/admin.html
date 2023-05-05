@@ -10,23 +10,43 @@
 </head>
 
 <body>
-    <h1>Admin</h1>
     <nav>
         <a class="nav_home" href="home.html">Home</a>
         <a class="nav_profile" href="profile.html">Profile</a>
         <a class="nav_profile" id="logout" href="index.html">Logout</a>
         <a class="nav_profile" id="admin-nav"></a>
     </nav>
+    <center>
+        <h1 class="profileName">Admin</h1>
+    </center>
 
-    <table id="users_table">
-        <tr>
-            <th>Id</th>
-            <th>Name</th>
-            <th>Password</th>
-            <th>Role</th>
-        </tr>
-    </table>
-    
+    <form class="creat-user-form" id="creat-user-form">
+        <label><b>Username:</b></label>
+        <input class="username_admin" type="text" id="username_admin" placeholder="Username">
+        <br>
+        <br>
+        <label><b>Password:</b></label>
+        <input class="password_admin" type="password" id="password_admin" placeholder="Password">
+        <br>
+        <br>
+        <label><b>Role:</b></label>
+        <input  class="role_admin" type="text" id="role_admin" placeholder="Role">
+        <br>
+        <br>
+        <button class="create_post" id="register">Creat</button>
+    </form>
+
+    <center>
+        <table id="users_table" class="users_table">
+            <tr>
+                <th>Id</th>
+                <th>Name</th>
+                <th>Password</th>
+                <th>Role</th>
+            </tr>
+        </table>
+    </center>
+
     <script src="admin.js"></script>
 </body>
 
