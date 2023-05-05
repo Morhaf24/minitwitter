@@ -25,6 +25,7 @@ function onRegisterResponse() {
     const responseStatus = registerRequest.status;
     if (responseStatus === 200) {
       alert("Success");
+      window.location.replace('http://localhost:4200')
     } else {
       alert("Regestry failed");
     }
